@@ -434,7 +434,7 @@ html.light .fmt-btn:hover { background: rgba(0,0,0,.05); }
 .notes-upload-strip:hover, .notes-upload-strip.drag-over { border-color: var(--accent); background: rgba(127,119,221,.05); }
 .notes-upload-icon { font-size: 18px; opacity: .7; }
 .notes-upload-txt { font-size: 13px; color: var(--text-sec); }
-.notes-upload-sub { font-size: 11px; color: var(--text-muted); }
+.notes-upload-sub { font-size: 11px; color: var(--text-muted); display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:3px; }
 
 /* Files grid */
 .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px,1fr)); gap: 10px; }
@@ -666,6 +666,11 @@ html.light .wz-theme-light { background:rgba(255,255,255,.9); }
 .subj-mgmt-row:last-child { border-bottom:none; }
 .subj-mgmt-name { flex:1;font-size:13px;font-weight:500; }
 .subj-add-row { display:flex;gap:8px;align-items:center;padding:12px 0 4px;flex-wrap:wrap; }
+
+/* ─── FILE OPEN BUTTON ──────────────────────────────────────────── */
+.file-open-btn { width:100%;margin-top:8px;padding:5px 0;border-radius:7px;font-size:12px;font-weight:600;background:rgba(127,119,221,.13);border:1px solid rgba(127,119,221,.25);color:var(--accent);cursor:pointer;transition:background .15s;font-family:inherit; }
+.file-open-btn:hover { background:rgba(127,119,221,.22); }
+.onedrive-hint { font-size:11.5px;color:var(--text-muted);margin-bottom:12px;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;line-height:1.55; }
 
 /* ─── IB MODE ───────────────────────────────────────────────────── */
 .ib-section-hd { font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);padding:14px 18px 5px;margin-top:4px;opacity:.8; }
@@ -1195,13 +1200,7 @@ let openFolders   = new Set();
 
 /* ─── PERSISTENCE ────────────────────────────────────────────────── */
 function save() {
-  try {
-    localStorage.setItem('sh_v4', JSON.stringify(S));
-  } catch(e) {
-    const slim = { ...S, files: S.files.map(f => ({...f, dataUrl:null})) };
-    try { localStorage.setItem('sh_v4', JSON.stringify(slim)); } catch(_){}
-    alert('Storage nearly full — large files may not persist. Consider removing old files.');
-  }
+  try { localStorage.setItem('sh_v4', JSON.stringify(S)); } catch(_) {}
 }
 
 function load() {
@@ -1241,6 +1240,8 @@ function load() {
     if (!('grade' in e)) e.grade = '';
     if (!e.topic && e.title) e.topic = e.title;
   });
+  // Migrate: drop old upload-based files (had dataUrl/size, not url)
+  S.files = S.files.filter(f => f.url);
   S.files.forEach(f => { if (!('folderId' in f)) f.folderId = null; });
   S.notes.forEach(n => {
     if (!('pinned' in n)) n.pinned = false;
@@ -1330,17 +1331,18 @@ function fmtSize(b) {
   return (b/1048576).toFixed(1)+' MB';
 }
 function fileEmoji(type) {
-  if (!type) return '📄';
-  if (type.startsWith('image/')) return '🖼️';
-  if (type==='application/pdf') return '📕';
-  if (type.includes('word')||type.includes('document')) return '📝';
-  if (type.includes('sheet')||type.includes('excel')||type==='text/csv') return '📊';
-  if (type.includes('presentation')||type.includes('powerpoint')) return '📋';
-  if (type.startsWith('video/')) return '🎬';
-  if (type.startsWith('audio/')) return '🎵';
-  if (type.includes('zip')||type.includes('rar')||type.includes('tar')) return '🗜️';
-  if (type.startsWith('text/')) return '📃';
+  if (type === 'word')        return '📝';
+  if (type === 'powerpoint')  return '📋';
+  if (type === 'excel')       return '📊';
+  if (type === 'pdf')         return '📕';
   return '📄';
+}
+function fileTypeBadge(type) {
+  if (type === 'word')       return {label:'WORD',  color:'#60a5fa', bg:'rgba(0,120,212,.15)'};
+  if (type === 'powerpoint') return {label:'PPT',   color:'#f87171', bg:'rgba(209,52,56,.15)'};
+  if (type === 'excel')      return {label:'EXCEL', color:'#4ade80', bg:'rgba(34,197,94,.15)'};
+  if (type === 'pdf')        return {label:'PDF',   color:'#f85149', bg:'rgba(248,81,73,.15)'};
+  return {label:'FILE', color:'var(--text-muted)', bg:'var(--border)'};
 }
 
 function todayStr() {
@@ -1959,6 +1961,22 @@ function renderSettings() {
           onkeydown="if(event.key==='Enter')addSubject()">
         <input type="color" class="color-picker" id="new-subj-color" value="#7F77DD">
         <button class="btn btn-primary btn-sm" onclick="addSubject()">+ Add Subject</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">OneDrive</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-lbl">Connect OneDrive</div>
+          <div class="settings-row-sub">Sign in with your Microsoft or school account so files open directly in Word, PowerPoint or Excel Online.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="connectOneDrive()">Open OneDrive ↗</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.65;padding:8px 0 2px">
+        <strong style="color:var(--text-sec)">How it works:</strong><br>
+        1. Click <em>Open OneDrive</em> and sign in with your Microsoft or school account.<br>
+        2. In Notes, click <strong>Browse OneDrive</strong> to pick a file — name and link fill in automatically.<br>
+        3. Files open directly in Word, PowerPoint or Excel Online — no downloads needed.
       </div>
     </div>
     <div class="settings-section">
@@ -2702,20 +2720,16 @@ function renderSubjectView() {
       <div class="notes-grid">${notesHtml}</div>
       <div class="notes-section-hd" style="margin-top:4px">
         <span class="notes-section-lbl">Files (${files.length})</span>
-        <button class="btn btn-ghost btn-sm" onclick="newFolder('${notesSubjF}')">+ Folder</button>
-      </div>
-      <div class="notes-upload-strip" id="notes-drop-zone">
-        <span class="notes-upload-icon">📎</span>
-        <div>
-          <div class="notes-upload-txt">Drop files here or click to attach</div>
-          <div class="notes-upload-sub">PDF, Word, PowerPoint, images — max 8 MB</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="newFolder('${notesSubjF}')">+ Folder</button>
+          <button class="btn btn-ghost btn-sm" onclick="openAddFileModal('${notesSubjF}')">+ Link</button>
+          <button class="btn btn-primary btn-sm" onclick="openOneDrivePicker('${notesSubjF}')">☁ Browse OneDrive</button>
         </div>
-        <input type="file" id="notes-file-input" multiple style="display:none" onchange="onNotesFileInput(event)">
       </div>
+      <div class="onedrive-hint">☁️ Click <strong>Browse OneDrive</strong> to pick files — they open directly in Word, PowerPoint or Excel Online. Need to sign in first? Use <strong>Connect OneDrive</strong> in Settings. Or paste a link manually with <strong>+ Link</strong>.</div>
       ${filesHtml}
     </div>`;
 
-  setupNotesDropZone();
 }
 
 function renderNoteEditor() {
@@ -2823,17 +2837,120 @@ function saveNoteNow() {
 }
 
 /* ─── NOTES FILE HANDLING ────────────────────────────────────────── */
-function setupNotesDropZone() {
-  const dz=document.getElementById('notes-drop-zone');
-  const fi=document.getElementById('notes-file-input');
-  if (!dz||!fi) return;
-  dz.addEventListener('click',()=>fi.click());
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');ingestFiles(e.dataTransfer.files,notesSubjF);});
+function openAddFileModal(subjId) {
+  const typeOpts = ['word','powerpoint','excel','pdf','other']
+    .map(t=>`<option value="${t}">${t==='word'?'Word (.doc/.docx)':t==='powerpoint'?'PowerPoint (.ppt/.pptx)':t==='excel'?'Excel (.xls/.xlsx)':t==='pdf'?'PDF':' Other'}</option>`)
+    .join('');
+  openModal('Add OneDrive File', `
+    <label class="fi-lbl">File name</label>
+    <input class="fi" id="add-file-name" placeholder="e.g. Redox Study Guide" autofocus>
+    <label class="fi-lbl" style="margin-top:12px">OneDrive sharing link</label>
+    <input class="fi" id="add-file-url" type="url" placeholder="https://1drv.ms/…  or  https://onedrive.live.com/…">
+    <label class="fi-lbl" style="margin-top:12px">File type</label>
+    <select class="fi" id="add-file-type">${typeOpts}</select>
+    <div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;line-height:1.55;background:var(--input-bg);border-radius:8px;padding:9px 11px">
+      💡 In OneDrive, right-click the file → <strong>Share</strong> → <strong>Copy link</strong>, then paste it here.
+    </div>
+    <div class="modal-ft" style="margin-top:18px"><div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveFileLink('${subjId}')">Save</button>
+      </div>
+    </div>`);
+  setTimeout(()=>document.getElementById('add-file-name')?.focus(), 80);
 }
 
-function onNotesFileInput(e) { ingestFiles(e.target.files,notesSubjF); e.target.value=''; }
+function saveFileLink(subjId) {
+  const name = document.getElementById('add-file-name')?.value?.trim();
+  const url  = document.getElementById('add-file-url')?.value?.trim();
+  const type = document.getElementById('add-file-type')?.value || 'other';
+  if (!name) { document.getElementById('add-file-name').focus(); return; }
+  if (!url)  { document.getElementById('add-file-url').focus();  return; }
+  S.files.push({ id:uid(), subjectId:subjId, name, type, url, folderId:null, createdAt:Date.now() });
+  save();
+  closeModal();
+  if (activePage==='notes') renderSubjectView();
+}
+
+/* ─── ONEDRIVE PICKER ────────────────────────────────────────────── */
+function detectTypeFromName(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  if (ext === 'doc'  || ext === 'docx') return 'word';
+  if (ext === 'ppt'  || ext === 'pptx') return 'powerpoint';
+  if (ext === 'xls'  || ext === 'xlsx') return 'excel';
+  if (ext === 'pdf')                     return 'pdf';
+  return 'other';
+}
+
+function openOneDrivePicker(subjId) {
+  const origin = (location.origin && location.origin !== 'null') ? location.origin : 'https://alex67-67.github.io';
+  const params = encodeURIComponent(JSON.stringify({
+    sdk: '8.0',
+    entry: { oneDrive: { files: {} } },
+    authentication: {},
+    messaging: { origin, channelId: '27' },
+    typesAndSources: { mode: 'files', pivots: { oneDrive: true, recent: true } }
+  }));
+  const pickerUrl = 'https://onedrive.live.com/picker?filePicker=' + params;
+  const pickerWin = window.open(pickerUrl, 'OneDrivePicker', 'width=960,height=680,left=80,top=60');
+  if (!pickerWin) {
+    alert('Popup blocked — please allow popups for this site and try again.');
+    return;
+  }
+
+  const { port1, port2 } = new MessageChannel();
+  let portSent = false;
+
+  const sendPort = () => {
+    if (portSent || pickerWin.closed) return;
+    portSent = true;
+    try { pickerWin.postMessage({ type: 'initialize', token: '' }, 'https://onedrive.live.com', [port2]); } catch(_) {}
+  };
+
+  port1.addEventListener('message', (e) => {
+    const { type, id, data } = e.data ?? {};
+    if (type === 'initialize') {
+      port1.postMessage({ type: 'activate' });
+    } else if (type === 'command') {
+      const cmd = data?.command;
+      if (cmd === 'authenticate') {
+        port1.postMessage({ type: 'acknowledge', id, data: { result: 'token', token: '' } });
+      } else if (cmd === 'pick') {
+        port1.postMessage({ type: 'acknowledge', id, data: { result: 'success' } });
+        handlePickedItems(data.items || [], subjId);
+        try { pickerWin.close(); } catch(_) {}
+      } else if (cmd === 'close') {
+        port1.postMessage({ type: 'acknowledge', id, data: { result: 'success' } });
+        try { pickerWin.close(); } catch(_) {}
+      }
+    }
+  });
+  port1.start();
+
+  const onWindowMsg = (e) => {
+    if (e.source !== pickerWin) return;
+    window.removeEventListener('message', onWindowMsg);
+    sendPort();
+  };
+  window.addEventListener('message', onWindowMsg);
+  setTimeout(() => { window.removeEventListener('message', onWindowMsg); sendPort(); }, 1500);
+}
+
+function handlePickedItems(items, subjId) {
+  if (!items?.length) return;
+  items.forEach(item => {
+    const name = item.name || item.displayName || 'OneDrive File';
+    const url  = item.webUrl || item.permissions?.[0]?.link?.webUrl || '';
+    if (!url) return;
+    S.files.push({ id: uid(), subjectId: subjId, name, type: detectTypeFromName(name), url, folderId: null, createdAt: Date.now() });
+  });
+  save();
+  if (activePage === 'notes') renderSubjectView();
+}
+
+function connectOneDrive() {
+  window.open('https://onedrive.live.com', '_blank', 'noopener');
+}
 
 /* ─── FOLDERS ────────────────────────────────────────────────────── */
 function renderFolderFiles(subjId, color, allFiles) {
@@ -2842,12 +2959,15 @@ function renderFolderFiles(subjId, color, allFiles) {
   const loose = allFiles.filter(f=>!f.folderId);
 
   function fileCardHtml(f) {
-    return `<div class="file-card" onclick="openFile('${f.id}')">
-      <button class="file-del" onclick="event.stopPropagation();delFile('${f.id}')" title="Delete">✕</button>
+    const b = fileTypeBadge(f.type);
+    return `<div class="file-card" style="cursor:default">
+      <button class="file-del" onclick="delFile('${f.id}')" title="Delete">✕</button>
+      <span style="position:absolute;top:10px;right:28px;font-size:9px;font-weight:700;background:${b.bg};color:${b.color};padding:2px 6px;border-radius:6px;letter-spacing:.3px">${b.label}</span>
       <div class="file-top-bar" style="background:${color}"></div>
       <div class="file-icon-big">${fileEmoji(f.type)}</div>
       <div class="file-name">${esc(f.name)}</div>
-      <div class="file-meta">${fmtSize(f.size)}&nbsp;·&nbsp;<span style="cursor:pointer;text-decoration:underline" onclick="event.stopPropagation();moveFilePrompt('${f.id}')">Move</span>&nbsp;·&nbsp;<span style="cursor:pointer;text-decoration:underline" onclick="event.stopPropagation();renameFilePrompt('${f.id}')">Rename</span></div>
+      <div class="file-meta"><span style="cursor:pointer;text-decoration:underline" onclick="moveFilePrompt('${f.id}')">Move</span>&nbsp;·&nbsp;<span style="cursor:pointer;text-decoration:underline" onclick="renameFilePrompt('${f.id}')">Rename</span></div>
+      <button class="file-open-btn" onclick="openFile('${f.id}')">Open ↗</button>
     </div>`;
   }
 
@@ -2933,24 +3053,11 @@ function moveFilePrompt(id) {
   save(); renderSubjectView();
 }
 
-function ingestFiles(list,subjId) {
-  const MAX=8*1024*1024;
-  Array.from(list).forEach(file=>{
-    if (file.size>MAX) { alert(`"${file.name}" exceeds 8 MB.`); return; }
-    const r=new FileReader();
-    r.onload=ev=>{
-      S.files.push({id:uid(),subjectId:subjId,name:file.name,type:file.type,size:file.size,dataUrl:ev.target.result,folderId:null,uploadedAt:Date.now()});
-      save(); if (activePage==='notes') renderSubjectView();
-    };
-    r.readAsDataURL(file);
-  });
-}
-
 function openFile(id) {
-  const f=S.files.find(x=>x.id===id);
-  if (!f?.dataUrl) { alert('File data unavailable — please re-upload.'); return; }
+  const f = S.files.find(x=>x.id===id);
+  if (!f?.url) { alert('No link saved — delete this file and add it again.'); return; }
   trackRecent('file', id, f.name, f.subjectId);
-  const a=document.createElement('a'); a.href=f.dataUrl; a.download=f.name; a.target='_blank'; a.click();
+  window.open(f.url, '_blank', 'noopener');
 }
 
 function trackRecent(type, id, title, subjectId) {
@@ -3676,5 +3783,6 @@ function init() {
 }
 init();
 </script>
+
 </body>
 </html>
