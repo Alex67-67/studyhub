@@ -13,7 +13,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237F77DD'/%3E%3Cpath d='M8 10h10M8 16h10M8 22h7' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='21' r='5' fill='%235DCAA5'/%3E%3Cpath d='M21 21l1.5 1.5L25 19' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ─── RESET & ROOT ─────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
 :root {
@@ -196,6 +196,14 @@ body { background: var(--bg); color: var(--text); display: flex; height: 100vh; 
 .btn-danger { background: rgba(248,81,73,.1); color: #f85149; border: 1px solid rgba(248,81,73,.2); }
 .btn-danger:hover { background: rgba(248,81,73,.18); }
 .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+
+/* ─── TOUCH INTERACTIONS ────────────────────────────────────────── */
+button, a, select, input, textarea, label { touch-action: manipulation; }
+.btn, .nav-item, .subj-item, .mob-nav-btn, .chip, .card-link,
+.check-circle, .folder-hd, .note-card, .hw-card, .file-card,
+.recent-item, .grade-card, .grade-summary-card, .search-res-item,
+.cal-cell, .subj-pick-chip, .ql-btn, .welcome-feat, .file-del,
+.file-open-btn, .ib-action-btn, .settings-row { touch-action: manipulation; }
 
 /* ─── BADGES ────────────────────────────────────────────────────── */
 .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
@@ -595,6 +603,7 @@ input[type=color].color-picker { width:36px; height:28px; border:1px solid var(-
   background: var(--bg);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 40px; text-align: center;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
   animation: fadeIn .5s ease;
 }
 .welcome-emoji { font-size: 60px; margin-bottom: 16px; animation: fadeSlideIn .6s ease; }
@@ -702,16 +711,18 @@ html.light .wz-theme-light { background:rgba(255,255,255,.9); }
 
 /* ─── MOBILE NAV ────────────────────────────────────────────────── */
 .mobile-nav { display:none; position:fixed;bottom:0;left:0;right:0;background:var(--sidebar-bg);border-top:1px solid var(--border);padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:200;justify-content:space-around; }
-.mob-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;border:none;background:none;cursor:pointer;color:var(--text-muted);font-family:inherit;border-radius:10px;transition:color .15s;min-width:48px; }
+.mob-nav-btn { display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;border:none;background:none;cursor:pointer;color:var(--text-muted);font-family:inherit;border-radius:10px;transition:color .15s;min-width:48px;min-height:44px;touch-action:manipulation; }
 .mob-nav-btn.active { color:var(--accent); }
 .mob-nav-btn svg { width:20px;height:20px; }
 .mob-nav-lbl { font-size:10px;font-weight:600;letter-spacing:.2px; }
 
 /* ─── RESPONSIVE ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  body { flex-direction: column; height: 100dvh; overflow: auto; }
+  body { flex-direction: column; height: 100dvh; overflow: hidden; }
   .sidebar { display: none; }
   .main { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .page { -webkit-overflow-scrolling: touch; }
+  .notes-subj-panel, .notes-content-panel, .modal, .wz-subj-scroll { -webkit-overflow-scrolling: touch; }
   .mobile-nav { display: flex; }
   .quick-bar { overflow-x: auto; padding: 6px 12px; gap: 6px; }
   .quick-bar::-webkit-scrollbar { display: none; }
