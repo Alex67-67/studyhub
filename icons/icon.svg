@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0d1117"/>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7F77DD" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#5DCAA5" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Book icon -->
+  <rect x="136" y="128" width="240" height="300" rx="18" fill="none" stroke="#e6edf3" stroke-width="18"/>
+  <line x1="136" y1="192" x2="376" y2="192" stroke="#e6edf3" stroke-width="14" stroke-linecap="round"/>
+  <line x1="176" y1="244" x2="336" y2="244" stroke="#e6edf3" stroke-width="12" stroke-linecap="round"/>
+  <line x1="176" y1="288" x2="296" y2="288" stroke="#e6edf3" stroke-width="12" stroke-linecap="round"/>
+  <line x1="176" y1="332" x2="316" y2="332" stroke="#e6edf3" stroke-width="12" stroke-linecap="round"/>
+  <!-- Star accent -->
+  <circle cx="336" cy="340" r="52" fill="#0d1117"/>
+  <text x="336" y="358" text-anchor="middle" font-size="64" font-family="system-ui">✦</text>
+</svg>
