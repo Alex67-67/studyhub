@@ -1964,22 +1964,6 @@ function renderSettings() {
       </div>
     </div>
     <div class="settings-section">
-      <div class="settings-section-title">OneDrive</div>
-      <div class="settings-row">
-        <div>
-          <div class="settings-row-lbl">Connect OneDrive</div>
-          <div class="settings-row-sub">Sign in with your Microsoft or school account so files open directly in Word, PowerPoint or Excel Online.</div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="connectOneDrive()">Open OneDrive ↗</button>
-      </div>
-      <div style="font-size:12px;color:var(--text-muted);line-height:1.65;padding:8px 0 2px">
-        <strong style="color:var(--text-sec)">How it works:</strong><br>
-        1. Click <em>Open OneDrive</em> and sign in with your Microsoft or school account.<br>
-        2. In Notes, click <strong>Browse OneDrive</strong> to pick a file — name and link fill in automatically.<br>
-        3. Files open directly in Word, PowerPoint or Excel Online — no downloads needed.
-      </div>
-    </div>
-    <div class="settings-section">
       <div class="settings-section-title">IB Programme</div>
       <div class="settings-row">
         <div>
@@ -2722,11 +2706,10 @@ function renderSubjectView() {
         <span class="notes-section-lbl">Files (${files.length})</span>
         <div style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="newFolder('${notesSubjF}')">+ Folder</button>
-          <button class="btn btn-ghost btn-sm" onclick="openAddFileModal('${notesSubjF}')">+ Link</button>
-          <button class="btn btn-primary btn-sm" onclick="openOneDrivePicker('${notesSubjF}')">☁ Browse OneDrive</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddFileModal('${notesSubjF}')">+ Add File</button>
         </div>
       </div>
-      <div class="onedrive-hint">☁️ Click <strong>Browse OneDrive</strong> to pick files — they open directly in Word, PowerPoint or Excel Online. Need to sign in first? Use <strong>Connect OneDrive</strong> in Settings. Or paste a link manually with <strong>+ Link</strong>.</div>
+      <div class="onedrive-hint">📎 Copy a sharing link from OneDrive or Google Drive and paste it here — files open directly in Word, PowerPoint, Excel Online, or Google Docs.</div>
       ${filesHtml}
     </div>`;
 
@@ -2839,17 +2822,18 @@ function saveNoteNow() {
 /* ─── NOTES FILE HANDLING ────────────────────────────────────────── */
 function openAddFileModal(subjId) {
   const typeOpts = ['word','powerpoint','excel','pdf','other']
-    .map(t=>`<option value="${t}">${t==='word'?'Word (.doc/.docx)':t==='powerpoint'?'PowerPoint (.ppt/.pptx)':t==='excel'?'Excel (.xls/.xlsx)':t==='pdf'?'PDF':' Other'}</option>`)
+    .map(t=>`<option value="${t}">${t==='word'?'Word':t==='powerpoint'?'PowerPoint':t==='excel'?'Excel':t==='pdf'?'PDF':'Other'}</option>`)
     .join('');
-  openModal('Add OneDrive File', `
+  openModal('Add File', `
     <label class="fi-lbl">File name</label>
-    <input class="fi" id="add-file-name" placeholder="e.g. Redox Study Guide" autofocus>
-    <label class="fi-lbl" style="margin-top:12px">OneDrive sharing link</label>
-    <input class="fi" id="add-file-url" type="url" placeholder="https://1drv.ms/…  or  https://onedrive.live.com/…">
+    <input class="fi" id="add-file-name" placeholder="e.g. Redox Study Guide.docx"
+      oninput="(function(){const t=detectTypeFromName(this.value);const s=document.getElementById('add-file-type');if(s&&t!=='other')s.value=t;}).call(this)">
+    <label class="fi-lbl" style="margin-top:12px">Sharing link</label>
+    <input class="fi" id="add-file-url" type="url" placeholder="https://…">
     <label class="fi-lbl" style="margin-top:12px">File type</label>
     <select class="fi" id="add-file-type">${typeOpts}</select>
     <div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;line-height:1.55;background:var(--input-bg);border-radius:8px;padding:9px 11px">
-      💡 In OneDrive, right-click the file → <strong>Share</strong> → <strong>Copy link</strong>, then paste it here.
+      💡 Copy a sharing link from <strong>OneDrive</strong> or <strong>Google Drive</strong> and paste it here — files open directly in Word, PowerPoint, Excel Online, or Google Docs.
     </div>
     <div class="modal-ft" style="margin-top:18px"><div></div>
       <div style="display:flex;gap:8px">
@@ -2863,7 +2847,7 @@ function openAddFileModal(subjId) {
 function saveFileLink(subjId) {
   const name = document.getElementById('add-file-name')?.value?.trim();
   const url  = document.getElementById('add-file-url')?.value?.trim();
-  const type = document.getElementById('add-file-type')?.value || 'other';
+  const type = document.getElementById('add-file-type')?.value || detectTypeFromName(name);
   if (!name) { document.getElementById('add-file-name').focus(); return; }
   if (!url)  { document.getElementById('add-file-url').focus();  return; }
   S.files.push({ id:uid(), subjectId:subjId, name, type, url, folderId:null, createdAt:Date.now() });
@@ -2872,7 +2856,6 @@ function saveFileLink(subjId) {
   if (activePage==='notes') renderSubjectView();
 }
 
-/* ─── ONEDRIVE PICKER ────────────────────────────────────────────── */
 function detectTypeFromName(name) {
   const ext = (name || '').split('.').pop().toLowerCase();
   if (ext === 'doc'  || ext === 'docx') return 'word';
@@ -2880,76 +2863,6 @@ function detectTypeFromName(name) {
   if (ext === 'xls'  || ext === 'xlsx') return 'excel';
   if (ext === 'pdf')                     return 'pdf';
   return 'other';
-}
-
-function openOneDrivePicker(subjId) {
-  const origin = (location.origin && location.origin !== 'null') ? location.origin : 'https://alex67-67.github.io';
-  const params = encodeURIComponent(JSON.stringify({
-    sdk: '8.0',
-    entry: { oneDrive: { files: {} } },
-    authentication: {},
-    messaging: { origin, channelId: '27' },
-    typesAndSources: { mode: 'files', pivots: { oneDrive: true, recent: true } }
-  }));
-  const pickerUrl = 'https://onedrive.live.com/picker?filePicker=' + params;
-  const pickerWin = window.open(pickerUrl, 'OneDrivePicker', 'width=960,height=680,left=80,top=60');
-  if (!pickerWin) {
-    alert('Popup blocked — please allow popups for this site and try again.');
-    return;
-  }
-
-  const { port1, port2 } = new MessageChannel();
-  let portSent = false;
-
-  const sendPort = () => {
-    if (portSent || pickerWin.closed) return;
-    portSent = true;
-    try { pickerWin.postMessage({ type: 'initialize', token: '' }, 'https://onedrive.live.com', [port2]); } catch(_) {}
-  };
-
-  port1.addEventListener('message', (e) => {
-    const { type, id, data } = e.data ?? {};
-    if (type === 'initialize') {
-      port1.postMessage({ type: 'activate' });
-    } else if (type === 'command') {
-      const cmd = data?.command;
-      if (cmd === 'authenticate') {
-        port1.postMessage({ type: 'acknowledge', id, data: { result: 'token', token: '' } });
-      } else if (cmd === 'pick') {
-        port1.postMessage({ type: 'acknowledge', id, data: { result: 'success' } });
-        handlePickedItems(data.items || [], subjId);
-        try { pickerWin.close(); } catch(_) {}
-      } else if (cmd === 'close') {
-        port1.postMessage({ type: 'acknowledge', id, data: { result: 'success' } });
-        try { pickerWin.close(); } catch(_) {}
-      }
-    }
-  });
-  port1.start();
-
-  const onWindowMsg = (e) => {
-    if (e.source !== pickerWin) return;
-    window.removeEventListener('message', onWindowMsg);
-    sendPort();
-  };
-  window.addEventListener('message', onWindowMsg);
-  setTimeout(() => { window.removeEventListener('message', onWindowMsg); sendPort(); }, 1500);
-}
-
-function handlePickedItems(items, subjId) {
-  if (!items?.length) return;
-  items.forEach(item => {
-    const name = item.name || item.displayName || 'OneDrive File';
-    const url  = item.webUrl || item.permissions?.[0]?.link?.webUrl || '';
-    if (!url) return;
-    S.files.push({ id: uid(), subjectId: subjId, name, type: detectTypeFromName(name), url, folderId: null, createdAt: Date.now() });
-  });
-  save();
-  if (activePage === 'notes') renderSubjectView();
-}
-
-function connectOneDrive() {
-  window.open('https://onedrive.live.com', '_blank', 'noopener');
 }
 
 /* ─── FOLDERS ────────────────────────────────────────────────────── */
