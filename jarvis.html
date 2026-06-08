@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  color: #00d4ff;
+  font-family: 'Orbitron', monospace;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── DOT GRID BACKGROUND ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0,180,255,0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: gridDrift 12s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes gridDrift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 44px 44px; }
+}
+
+/* ─── AMBIENT RADIAL BG ─── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 48%, rgba(0,100,200,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambientPulse 6s ease-in-out infinite;
+}
+
+@keyframes ambientPulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+/* ─── HORIZONTAL SCAN LINE ─── */
+.scan-h {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0,212,255,0.12), transparent);
+  animation: scanDown 12s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes scanDown {
+  0%   { top: 0%; opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ─── CORNER BRACKETS ─── */
+.corner {
+  position: fixed;
+  width: 36px; height: 36px;
+  z-index: 10;
+  opacity: 0;
+  animation: cFade 0.6s ease forwards;
+}
+.corner-tl { top: 20px;  left: 20px;  border-top:  1px solid rgba(0,212,255,0.4); border-left:  1px solid rgba(0,212,255,0.4); animation-delay: 1.8s; }
+.corner-tr { top: 20px;  right: 20px; border-top:  1px solid rgba(0,212,255,0.4); border-right: 1px solid rgba(0,212,255,0.4); animation-delay: 2.0s; }
+.corner-bl { bottom: 20px; left: 20px;  border-bottom: 1px solid rgba(0,212,255,0.4); border-left:  1px solid rgba(0,212,255,0.4); animation-delay: 2.2s; }
+.corner-br { bottom: 20px; right: 20px; border-bottom: 1px solid rgba(0,212,255,0.4); border-right: 1px solid rgba(0,212,255,0.4); animation-delay: 2.4s; }
+
+@keyframes cFade { to { opacity: 1; } }
+
+/* ─── SYSTEM LABEL (top left) ─── */
+#sys-label {
+  position: fixed;
+  top: 20px; left: 62px;
+  font-size: 8px;
+  letter-spacing: 4px;
+  color: rgba(0,212,255,0.25);
+  z-index: 10;
+  opacity: 0;
+  animation: cFade 0.6s ease forwards 2.6s;
+}
+
+/* ─── TITLE BAR (top center) ─── */
+#title-bar {
+  position: fixed;
+  top: 18px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 10px;
+  color: rgba(0,212,255,0.3);
+  z-index: 10;
+  opacity: 0;
+  animation: cFade 0.6s ease forwards 2.5s;
+}
+
+/* ─── MAIN LAYOUT ─── */
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 64px 48px 36px;
+  z-index: 2;
+}
+
+/* ─── TOP: CLOCK ─── */
+#top {
+  text-align: center;
+  opacity: 0;
+  animation: slideDown 0.8s cubic-bezier(0.22,1,0.36,1) forwards 0.6s;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#clock {
+  font-size: clamp(52px, 7vw, 88px);
+  font-weight: 700;
+  letter-spacing: 10px;
+  color: #00d4ff;
+  text-shadow:
+    0 0 20px rgba(0,212,255,0.9),
+    0 0 60px rgba(0,212,255,0.4),
+    0 0 120px rgba(0,150,255,0.2);
+  line-height: 1;
+  animation: clockGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes clockGlow {
+  from { text-shadow: 0 0 20px rgba(0,212,255,0.9), 0 0 60px rgba(0,212,255,0.4), 0 0 120px rgba(0,150,255,0.2); }
+  to   { text-shadow: 0 0 30px rgba(0,212,255,1),   0 0 80px rgba(0,212,255,0.6), 0 0 160px rgba(0,150,255,0.3); }
+}
+
+#date-line {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 5px;
+  color: rgba(0,212,255,0.45);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+/* ─── MIDDLE ROW ─── */
+#middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(32px, 5vw, 80px);
+  flex: 1;
+  width: 100%;
+  max-width: 1300px;
+}
+
+/* ─── INFO PANELS ─── */
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: clamp(160px, 17vw, 210px);
+}
+
+.panel-left  { opacity: 0; animation: slideRight 0.8s cubic-bezier(0.22,1,0.36,1) forwards 1.0s; }
+.panel-right { opacity: 0; animation: slideLeft  0.8s cubic-bezier(0.22,1,0.36,1) forwards 1.2s; }
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.iblock {
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 2px;
+  padding: 14px 16px;
+  background: rgba(0,212,255,0.025);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.iblock:hover {
+  border-color: rgba(0,212,255,0.35);
+  background: rgba(0,212,255,0.05);
+}
+
+/* animated left edge */
+.iblock::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.8), transparent);
+  animation: edgeScan 4s ease-in-out infinite;
+}
+
+.iblock:nth-child(2)::before { animation-delay: 2s; }
+
+@keyframes edgeScan {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 0.9; }
+}
+
+/* corner cut */
+.iblock::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  border-style: solid;
+  border-width: 0 0 10px 10px;
+  border-color: transparent transparent #000 rgba(0,212,255,0.15);
+}
+
+.ilabel {
+  font-size: 7.5px;
+  letter-spacing: 3px;
+  color: rgba(0,212,255,0.4);
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+.ival {
+  font-size: clamp(18px, 2.2vw, 26px);
+  font-weight: 700;
+  color: #00d4ff;
+  text-shadow: 0 0 12px rgba(0,212,255,0.6);
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+.isub {
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  color: rgba(0,212,255,0.35);
+  margin-top: 5px;
+  text-transform: uppercase;
+}
+
+/* ─── CENTER CIRCLE ─── */
+#circle-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width:  clamp(240px, 26vw, 340px);
+  height: clamp(240px, 26vw, 340px);
+  opacity: 0;
+  animation: circlePop 1.2s cubic-bezier(0.22,1,0.36,1) forwards 0.3s;
+}
+
+@keyframes circlePop {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Outer ambient glow */
+.c-glow {
+  position: absolute;
+  inset: -50px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,180,255,0.1) 0%, rgba(0,100,200,0.04) 50%, transparent 70%);
+  animation: glowBreath 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes glowBreath {
+  0%, 100% { transform: scale(1);    opacity: 0.7; }
+  50%       { transform: scale(1.08); opacity: 1; }
+}
+
+/* SVG rings */
+#rsvg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+}
+
+.r-ring1 { transform-box: fill-box; transform-origin: center; animation: cwSpin 28s linear infinite; }
+.r-ring2 { transform-box: fill-box; transform-origin: center; animation: ccwSpin 20s linear infinite; }
+.r-ring3 { transform-box: fill-box; transform-origin: center; animation: cwSpin 12s linear infinite; }
+.r-ring4 { transform-box: fill-box; transform-origin: center; animation: cwSpin 10s linear infinite; }
+.r-scan  { transform-box: fill-box; transform-origin: center; animation: cwSpin 3.5s linear infinite; }
+
+@keyframes cwSpin  { to { transform: rotate(360deg); } }
+@keyframes ccwSpin { to { transform: rotate(-360deg); } }
+
+/* Core glow div */
+.c-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(0,212,255,0.45) 0%,
+    rgba(0,150,255,0.15) 45%,
+    transparent 70%);
+  animation: corePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes corePulse {
+  0%, 100% { transform: translate(-50%,-50%) scale(1);    opacity: 0.85; }
+  50%       { transform: translate(-50%,-50%) scale(1.18); opacity: 1; }
+}
+
+.c-core-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,212,255,0.65);
+  box-shadow:
+    0 0 16px rgba(0,212,255,0.5),
+    inset 0 0 16px rgba(0,212,255,0.15);
+  animation: coreRingPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes coreRingPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(0,212,255,0.5), inset 0 0 16px rgba(0,212,255,0.15); }
+  50%       { box-shadow: 0 0 28px rgba(0,212,255,0.8), inset 0 0 24px rgba(0,212,255,0.25); }
+}
+
+/* ONLINE label inside circle */
+#center-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#center-label .cl-main {
+  font-size: 8px;
+  letter-spacing: 5px;
+  color: rgba(0,212,255,0.7);
+  text-shadow: 0 0 10px rgba(0,212,255,0.6);
+  display: block;
+  animation: labelBlink 5s ease-in-out infinite 3s;
+}
+
+#center-label .cl-sub {
+  font-size: 6.5px;
+  letter-spacing: 3px;
+  color: rgba(0,212,255,0.35);
+  display: block;
+  margin-top: 3px;
+}
+
+@keyframes labelBlink {
+  0%, 90%, 100% { opacity: 0.7; }
+  93%            { opacity: 0.1; }
+  96%            { opacity: 0.7; }
+}
+
+/* ─── BOTTOM ─── */
+#bottom {
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+  opacity: 0;
+  animation: slideUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards 1.4s;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#quote {
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: rgba(0,212,255,0.28);
+  margin-bottom: 18px;
+  line-height: 1.8;
+  padding: 0 16px;
+}
+
+#input-row {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(0,212,255,0.25);
+  border-radius: 2px;
+  background: rgba(0,212,255,0.03);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+}
+
+#input-row:focus-within {
+  border-color: rgba(0,212,255,0.6);
+  box-shadow: 0 0 24px rgba(0,212,255,0.12), inset 0 0 12px rgba(0,212,255,0.04);
+}
+
+/* left bracket decoration */
+#input-row::before {
+  content: '>';
+  padding: 0 14px;
+  font-size: 12px;
+  color: rgba(0,212,255,0.35);
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+#jarvis-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 14px 0;
+  font-family: 'Orbitron', monospace;
+  font-size: 10.5px;
+  letter-spacing: 2.5px;
+  color: #00d4ff;
+  caret-color: rgba(0,212,255,0.8);
+  user-select: text;
+}
+
+#jarvis-inp::placeholder {
+  color: rgba(0,212,255,0.2);
+  letter-spacing: 2.5px;
+}
+
+#send-btn {
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(0,212,255,0.15);
+  cursor: pointer;
+  color: rgba(0,212,255,0.4);
+  font-family: 'Orbitron', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  padding: 0 18px;
+  height: 100%;
+  min-height: 48px;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+#send-btn:hover {
+  color: #00d4ff;
+  background: rgba(0,212,255,0.06);
+}
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed;
+  bottom: 70px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(0,15,30,0.95);
+  border: 1px solid rgba(0,212,255,0.4);
+  padding: 9px 22px;
+  font-size: 8.5px;
+  letter-spacing: 3px;
+  color: #00d4ff;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  z-index: 50;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── WAKEUP OVERLAY ─── */
+#wakeup {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: none;
+  animation: wkFade 2.8s ease forwards;
+}
+
+@keyframes wkFade {
+  0%    { opacity: 1; }
+  65%   { opacity: 1; }
+  100%  { opacity: 0; }
+}
+
+#wk-main {
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 800;
+  letter-spacing: 14px;
+  color: #00d4ff;
+  text-shadow:
+    0 0 30px rgba(0,212,255,0.9),
+    0 0 80px rgba(0,212,255,0.5);
+  animation: wkFlicker 0.1s ease-in-out 5;
+}
+
+@keyframes wkFlicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.15; }
+}
+
+#wk-sub {
+  font-size: 9px;
+  letter-spacing: 7px;
+  color: rgba(0,212,255,0.4);
+}
+
+#wk-bar {
+  width: clamp(200px, 25vw, 320px);
+  height: 1px;
+  background: rgba(0,212,255,0.1);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+#wk-bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  background: rgba(0,212,255,0.7);
+  width: 0%;
+  animation: wkLoad 2s cubic-bezier(0.4,0,0.2,1) forwards 0.2s;
+  box-shadow: 0 0 8px rgba(0,212,255,0.6);
+}
+
+@keyframes wkLoad {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-height: 660px) {
+  #app { padding: 52px 36px 28px; }
+  #quote { display: none; }
+  .panels { gap: 10px; }
+}
+
+@media (max-width: 900px) {
+  .panels { width: 140px; }
+  .ival { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Wake-up overlay -->
+<div id="wakeup">
+  <div id="wk-main">JARVIS ONLINE</div>
+  <div id="wk-sub">INITIALIZING SYSTEMS</div>
+  <div id="wk-bar"></div>
+</div>
+
+<!-- Ambient scan line -->
+<div class="scan-h"></div>
+
+<!-- Corner brackets -->
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<!-- Labels -->
+<div id="title-bar">J · A · R · V · I · S</div>
+<div id="sys-label">SYS v2.0</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Main app -->
+<div id="app">
+
+  <!-- TOP: Clock -->
+  <div id="top">
+    <div id="clock">00:00:00</div>
+    <div id="date-line">LOADING…</div>
+  </div>
+
+  <!-- MIDDLE: Panels + Circle -->
+  <div id="middle">
+
+    <!-- Left panels -->
+    <div class="panels panel-left">
+      <div class="iblock">
+        <div class="ilabel">ZÜRICH WEATHER</div>
+        <div class="ival" id="w-temp">--°C</div>
+        <div class="isub" id="w-desc">CONNECTING…</div>
+      </div>
+      <div class="iblock">
+        <div class="ilabel">STUDY STREAK</div>
+        <div class="ival" id="streak-val">-- DAYS</div>
+        <div class="isub" id="streak-sub">CONSECUTIVE</div>
+      </div>
+    </div>
+
+    <!-- Center circle -->
+    <div id="circle-wrap">
+      <div class="c-glow"></div>
+
+      <svg id="rsvg" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="fg" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="fgs" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Outermost subtle ring -->
+        <circle cx="170" cy="170" r="162" fill="none" stroke="rgba(0,212,255,0.05)" stroke-width="1"/>
+
+        <!-- Ring 1: slow dashed outer -->
+        <g class="r-ring1">
+          <circle cx="170" cy="170" r="155" fill="none"
+            stroke="rgba(0,212,255,0.12)" stroke-width="1"
+            stroke-dasharray="3 14"/>
+          <circle cx="170" cy="170" r="155" fill="none"
+            stroke="rgba(0,212,255,0.5)" stroke-width="1.5"
+            stroke-dasharray="40 270" stroke-linecap="round"
+            filter="url(#fg)"/>
+          <!-- marker dots on ring 1 -->
+          <circle cx="170" cy="15" r="2.5" fill="rgba(0,212,255,0.7)" filter="url(#fg)"/>
+        </g>
+
+        <!-- Ring 2: counter-rotate arcs -->
+        <g class="r-ring2">
+          <circle cx="170" cy="170" r="135" fill="none"
+            stroke="rgba(0,212,255,0.08)" stroke-width="0.5"/>
+          <circle cx="170" cy="170" r="135" fill="none"
+            stroke="rgba(0,212,255,0.55)" stroke-width="2"
+            stroke-dasharray="65 90 10 190" stroke-linecap="round"
+            filter="url(#fg)"/>
+          <circle cx="170" cy="170" r="135" fill="none"
+            stroke="rgba(0,212,255,0.25)" stroke-width="1"
+            stroke-dasharray="25 310" stroke-linecap="round"/>
+        </g>
+
+        <!-- Ring 3: medium inner dashed -->
+        <g class="r-ring3">
+          <circle cx="170" cy="170" r="110" fill="none"
+            stroke="rgba(0,212,255,0.07)" stroke-width="0.5"/>
+          <circle cx="170" cy="170" r="110" fill="none"
+            stroke="rgba(0,212,255,0.65)" stroke-width="2"
+            stroke-dasharray="80 210" stroke-linecap="round"
+            filter="url(#fgs)"/>
+          <circle cx="170" cy="170" r="110" fill="none"
+            stroke="rgba(0,212,255,0.2)" stroke-width="1"
+            stroke-dasharray="15 55 5 285" stroke-linecap="round"/>
+        </g>
+
+        <!-- Ring 4: small fast inner arcs -->
+        <g class="r-ring4">
+          <circle cx="170" cy="170" r="88" fill="none"
+            stroke="rgba(0,212,255,0.06)" stroke-width="0.5"/>
+          <circle cx="170" cy="170" r="88" fill="none"
+            stroke="rgba(0,212,255,0.4)" stroke-width="1.5"
+            stroke-dasharray="35 88 10 420" stroke-linecap="round"
+            filter="url(#fg)"/>
+        </g>
+
+        <!-- Scanner arm -->
+        <g class="r-scan">
+          <line x1="170" y1="170" x2="170" y2="84"
+            stroke="rgba(0,212,255,0.3)" stroke-width="1" stroke-linecap="round"
+            filter="url(#fg)"/>
+          <circle cx="170" cy="84" r="3" fill="rgba(0,212,255,0.9)" filter="url(#fgs)"/>
+          <!-- subtle sweep gradient effect via arc -->
+          <path d="M 170 170 L 170 84 A 86 86 0 0 1 256 170 Z"
+            fill="rgba(0,212,255,0.025)" stroke="none"/>
+        </g>
+
+        <!-- Static tick marks at compass points -->
+        <g fill="none" stroke="rgba(0,212,255,0.4)" stroke-width="1.5" stroke-linecap="round">
+          <line x1="170" y1="5"  x2="170" y2="16"/>
+          <line x1="170" y1="324" x2="170" y2="335"/>
+          <line x1="5"  y1="170" x2="16"  y2="170"/>
+          <line x1="324" y1="170" x2="335" y2="170"/>
+        </g>
+        <g fill="none" stroke="rgba(0,212,255,0.2)" stroke-width="1" stroke-linecap="round">
+          <line x1="267" y1="21"  x2="262" y2="30"/>
+          <line x1="319" y1="73"  x2="310" y2="78"/>
+          <line x1="319" y1="267" x2="310" y2="262"/>
+          <line x1="267" y1="319" x2="262" y2="310"/>
+          <line x1="73"  y1="319" x2="78"  y2="310"/>
+          <line x1="21"  y1="267" x2="30"  y2="262"/>
+          <line x1="21"  y1="73"  x2="30"  y2="78"/>
+          <line x1="73"  y1="21"  x2="78"  y2="30"/>
+        </g>
+
+        <!-- Core rings (static) -->
+        <circle cx="170" cy="170" r="52" fill="rgba(0,50,100,0.15)"
+          stroke="rgba(0,212,255,0.4)" stroke-width="1.5" filter="url(#fg)"/>
+        <circle cx="170" cy="170" r="38" fill="rgba(0,80,160,0.1)"
+          stroke="rgba(0,212,255,0.25)" stroke-width="1"/>
+      </svg>
+
+      <!-- Core glow layers -->
+      <div class="c-core"></div>
+      <div class="c-core-ring"></div>
+
+      <!-- Center text -->
+      <div id="center-label">
+        <span class="cl-main">JARVIS</span>
+        <span class="cl-sub">ONLINE</span>
+      </div>
+    </div>
+
+    <!-- Right panels -->
+    <div class="panels panel-right">
+      <div class="iblock">
+        <div class="ilabel">NEXT EXAM</div>
+        <div class="ival" id="exam-val">-- DAYS</div>
+        <div class="isub" id="exam-sub">LOADING…</div>
+      </div>
+      <div class="iblock">
+        <div class="ilabel">PENDING TASKS</div>
+        <div class="ival" id="hw-val">--</div>
+        <div class="isub" id="hw-sub">HOMEWORK</div>
+      </div>
+    </div>
+
+  </div><!-- /middle -->
+
+  <!-- BOTTOM: Quote + Input -->
+  <div id="bottom">
+    <div id="quote"></div>
+    <div id="input-row">
+      <input id="jarvis-inp" type="text"
+        placeholder="TELL JARVIS SOMETHING…"
+        autocomplete="off" spellcheck="false"/>
+      <button id="send-btn" onclick="submitQuery()">SEND</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ─── QUOTES ───────────────────────────────────────────────────────────────────
+const QUOTES = [
+  "THE ONLY WAY TO DO GREAT WORK IS TO LOVE WHAT YOU DO.",
+  "SUCCESS IS THE SUM OF SMALL EFFORTS, REPEATED DAY IN AND DAY OUT.",
+  "DISCIPLINE IS CHOOSING BETWEEN WHAT YOU WANT NOW AND WHAT YOU WANT MOST.",
+  "THE FUTURE BELONGS TO THOSE WHO PREPARE FOR IT TODAY.",
+  "HARD WORK BEATS TALENT WHEN TALENT DOESN'T WORK HARD.",
+  "YOU DON'T HAVE TO BE GREAT TO START, BUT YOU HAVE TO START TO BE GREAT.",
+  "KNOWLEDGE IS POWER. INFORMATION IS LIBERATING. EDUCATION IS THE PREMISE OF PROGRESS.",
+  "EVERY EXPERT WAS ONCE A BEGINNER.",
+  "FOCUS ON BEING PRODUCTIVE INSTEAD OF BUSY.",
+  "THE DIFFERENCE BETWEEN ORDINARY AND EXTRAORDINARY IS THAT LITTLE EXTRA.",
+  "DON'T WATCH THE CLOCK; DO WHAT IT DOES. KEEP GOING.",
+  "LEARNING IS NOT ATTAINED BY CHANCE — IT MUST BE SOUGHT WITH ARDOR.",
+  "INVEST IN YOUR MIND. IT PAYS THE BEST INTEREST.",
+  "SMALL DAILY IMPROVEMENTS ARE THE KEY TO STAGGERING LONG-TERM RESULTS.",
+  "THE SECRET OF GETTING AHEAD IS GETTING STARTED.",
+  "EXCELLENCE IS NOT A DESTINATION BUT A CONTINUOUS JOURNEY.",
+  "YOUR ONLY LIMIT IS YOUR MIND.",
+  "PUSH YOURSELF. NO ONE ELSE WILL DO IT FOR YOU.",
+  "GREAT THINGS NEVER COME FROM COMFORT ZONES.",
+  "WORK IN SILENCE. LET SUCCESS BE YOUR NOISE.",
+  "ONE HOUR OF DEEP FOCUS IS WORTH THREE HOURS OF DISTRACTION.",
+  "SYSTEMS BEAT MOTIVATION. BUILD THE HABIT, NOT THE MOOD.",
+  "THE PAIN OF DISCIPLINE IS FAR LESS THAN THE PAIN OF REGRET.",
+  "STUDY NOT TO KNOW MORE, BUT TO UNDERSTAND DEEPER.",
+  "EVERY DAY IS A NEW OPPORTUNITY TO IMPROVE.",
+  "INTELLIGENCE WITHOUT AMBITION IS A BIRD WITHOUT WINGS.",
+  "WHAT YOU DO TODAY CAN IMPROVE ALL YOUR TOMORROWS.",
+  "STRIVE FOR PROGRESS, NOT PERFECTION.",
+  "THE MIND IS EVERYTHING. WHAT YOU THINK, YOU BECOME.",
+  "SUCCESS DEMANDS SINGLENESS OF PURPOSE.",
+];
+
+(function setQuote() {
+  const d = new Date();
+  const dy = Math.floor((d - new Date(d.getFullYear(),0,0)) / 86400000);
+  document.getElementById('quote').textContent = '"' + QUOTES[dy % QUOTES.length] + '"';
+})();
+
+// ─── CLOCK ────────────────────────────────────────────────────────────────────
+const WDAYS  = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+function pad(n) { return String(n).padStart(2,'0'); }
+function todayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
+}
+
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  document.getElementById('date-line').textContent =
+    `${WDAYS[n.getDay()]} · ${pad(n.getDate())} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;
+}
+tick();
+setInterval(tick, 1000);
+
+// ─── WEATHER ─────────────────────────────────────────────────────────────────
+const WMO = {
+  0:'CLEAR SKY', 1:'MAINLY CLEAR', 2:'PARTLY CLOUDY', 3:'OVERCAST',
+  45:'FOG', 48:'ICING FOG',
+  51:'LIGHT DRIZZLE', 53:'DRIZZLE', 55:'HEAVY DRIZZLE',
+  61:'LIGHT RAIN', 63:'RAIN', 65:'HEAVY RAIN',
+  71:'LIGHT SNOW', 73:'SNOW', 75:'HEAVY SNOW', 77:'SNOW GRAINS',
+  80:'LIGHT SHOWERS', 81:'SHOWERS', 82:'VIOLENT SHOWERS',
+  85:'SNOW SHOWERS', 86:'HEAVY SNOW SHOWERS',
+  95:'THUNDERSTORM', 96:'HAIL STORM', 99:'SEVERE STORM',
+};
+
+async function fetchWeather() {
+  try {
+    const r = await fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=47.3769&longitude=8.5417' +
+      '&current=temperature_2m,apparent_temperature,weather_code&timezone=Europe%2FZurich'
+    );
+    const d = await r.json();
+    const temp   = Math.round(d.current.temperature_2m);
+    const feels  = Math.round(d.current.apparent_temperature);
+    const code   = d.current.weather_code;
+    document.getElementById('w-temp').textContent = `${temp}°C`;
+    document.getElementById('w-desc').textContent =
+      `${WMO[code] || 'WEATHER DATA'} · FEELS ${feels}°`;
+  } catch {
+    document.getElementById('w-desc').textContent = 'OFFLINE';
+  }
+}
+fetchWeather();
+setInterval(fetchWeather, 10 * 60 * 1000);
+
+// ─── STUDYHUB DATA ────────────────────────────────────────────────────────────
+function loadHub() {
+  try { return JSON.parse(localStorage.getItem('sh_v4') || 'null'); } catch { return null; }
+}
+
+function refreshData() {
+  const S = loadHub();
+  const td = todayStr();
+
+  // Homework
+  if (S && Array.isArray(S.homework)) {
+    const pending  = S.homework.filter(h => !h.done && !h.archived);
+    const dueToday = pending.filter(h => h.dueDate <= td);
+    document.getElementById('hw-val').textContent = pending.length;
+    document.getElementById('hw-sub').textContent = dueToday.length
+      ? `${dueToday.length} DUE TODAY`
+      : `${pending.length} PENDING`;
+  } else {
+    document.getElementById('hw-val').textContent = '0';
+    document.getElementById('hw-sub').textContent = 'OPEN STUDYHUB FIRST';
+  }
+
+  // Next exam
+  if (S && Array.isArray(S.exams)) {
+    const upcoming = S.exams
+      .filter(e => e.date >= td)
+      .sort((a,b) => a.date.localeCompare(b.date));
+    if (upcoming.length) {
+      const nx    = upcoming[0];
+      const diff  = Math.round((new Date(nx.date+'T00:00:00') - new Date(td+'T00:00:00')) / 86400000);
+      const subs  = S.settings?.subjects || [];
+      const found = subs.find(s => s.id === nx.subjectId);
+      const name  = (found?.name || nx.subjectId || 'EXAM').toUpperCase();
+      document.getElementById('exam-val').textContent = diff === 0 ? 'TODAY' : `${diff} DAYS`;
+      document.getElementById('exam-sub').textContent = name;
+    } else {
+      document.getElementById('exam-val').textContent = 'NONE';
+      document.getElementById('exam-sub').textContent = 'NO EXAMS SCHEDULED';
+    }
+  } else {
+    document.getElementById('exam-val').textContent = '--';
+    document.getElementById('exam-sub').textContent = 'NO DATA';
+  }
+
+  // Streak
+  try {
+    const st = JSON.parse(localStorage.getItem('sh_streak') || '{}');
+    const cnt = st.count || 0;
+    document.getElementById('streak-val').textContent = `${cnt} DAY${cnt !== 1 ? 'S' : ''}`;
+    document.getElementById('streak-sub').textContent =
+      cnt >= 30 ? 'LEGENDARY 🔥' :
+      cnt >= 14 ? 'ON FIRE 🔥' :
+      cnt >= 7  ? 'STREAK ACTIVE' :
+      cnt >= 1  ? 'KEEP GOING' : 'START TODAY';
+  } catch { /* no streak data yet */ }
+}
+
+refreshData();
+setInterval(refreshData, 30 * 1000);
+window.addEventListener('focus', refreshData);
+
+// ─── COMMAND INPUT ────────────────────────────────────────────────────────────
+document.getElementById('jarvis-inp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitQuery();
+});
+
+function submitQuery() {
+  const inp = document.getElementById('jarvis-inp');
+  const msg = inp.value.trim();
+  if (!msg) { inp.focus(); return; }
+
+  navigator.clipboard.writeText(msg)
+    .then(() => showToast('MESSAGE COPIED — PASTE IN CLAUDE.AI'))
+    .catch(() => showToast('OPENING CLAUDE.AI'));
+
+  window.open('https://claude.ai/new', '_blank');
+  inp.value = '';
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  t.textContent = msg;
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ─── WAKEUP CLEANUP ───────────────────────────────────────────────────────────
+setTimeout(() => {
+  const w = document.getElementById('wakeup');
+  if (w) w.style.display = 'none';
+}, 3200);
+</script>
+</body>
+</html>
