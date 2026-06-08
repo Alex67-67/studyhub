@@ -100,7 +100,7 @@ body { background: var(--bg); color: var(--text); display: flex; height: 100vh; 
   transition: all .15s; user-select: none;
 }
 .subj-item:hover { background: rgba(255,255,255,.05); color: var(--text); }
-.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: .75; }
 
 /* ─── MAIN ──────────────────────────────────────────────────────── */
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -754,237 +754,409 @@ html.light .wz-theme-light { background:rgba(255,255,255,.9); }
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   DESIGN POLISH — overrides applied after base styles
+   MONOCHROME DESIGN — clean, flat, professional
    ══════════════════════════════════════════════════════════════ */
 
-/* ─── UPDATED TOKENS ─────────────────────────────────────────────── */
+/* ─── COLOR TOKENS ───────────────────────────────────────────────── */
 :root {
-  --bg:          #0c0f16;
-  --sidebar-bg:  #111520;
-  --card-bg:     #161c28;
-  --card-hover:  #1c2334;
-  --border:      rgba(255,255,255,0.07);
-  --border-hi:   rgba(255,255,255,0.14);
-  --text:        #e8ecf4;
-  --text-sec:    #8892a4;
-  --text-muted:  #555f74;
-  --input-bg:    #0c0f16;
-  --accent:      #818cf8;
-  --accent-dim:  rgba(129,140,248,0.10);
-  --accent-glow: rgba(129,140,248,0.22);
-  --shadow:      0 4px 24px rgba(0,0,0,.5);
+  --bg:          #0F0F0F;
+  --sidebar-bg:  #141414;
+  --card-bg:     #1A1A1A;
+  --card-hover:  #202020;
+  --border:      #2A2A2A;
+  --border-hi:   #383838;
+  --text:        #F0F0F0;
+  --text-sec:    #777777;
+  --text-muted:  #444444;
+  --input-bg:    #141414;
+  --accent:      #3B82F6;
+  --accent-dim:  rgba(59,130,246,0.10);
+  --accent-glow: rgba(59,130,246,0.18);
+  --shadow:      none;
   --easing:      cubic-bezier(0.4, 0, 0.2, 1);
 }
 html.light {
-  --bg:          #f1f4f9;
-  --sidebar-bg:  #ffffff;
+  --bg:          #ffffff;
+  --sidebar-bg:  #fafafa;
   --card-bg:     #ffffff;
-  --card-hover:  #f5f7fb;
-  --border:      rgba(0,0,0,0.07);
-  --border-hi:   rgba(0,0,0,0.13);
-  --text:        #0f172a;
-  --text-sec:    #334155;
-  --text-muted:  #8fa0b4;
-  --input-bg:    #f8fafc;
-  --accent:      #6366f1;
-  --accent-dim:  rgba(99,102,241,0.08);
-  --accent-glow: rgba(99,102,241,0.18);
-  --shadow:      0 4px 24px rgba(0,0,0,.07);
+  --card-hover:  #f5f5f5;
+  --border:      #e8e8e8;
+  --border-hi:   #d0d0d0;
+  --text:        #111111;
+  --text-sec:    #666666;
+  --text-muted:  #aaaaaa;
+  --input-bg:    #fafafa;
+  --accent:      #111111;
+  --accent-dim:  rgba(17,17,17,0.06);
+  --accent-glow: rgba(17,17,17,0.10);
+  --shadow:      none;
 }
-html.light .modal { background: #ffffff; }
-html.light .btn-ghost { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.1); }
-html.light .modal-x:hover { background: rgba(0,0,0,.06); }
 
 /* ─── ANIMATIONS ─────────────────────────────────────────────────── */
-@keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-.page.active { animation: fadeSlideIn .22s var(--easing); }
+@keyframes fadeSlideIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.page.active { animation: fadeSlideIn .2s var(--easing); }
 
 /* ─── SIDEBAR ────────────────────────────────────────────────────── */
-.nav-item { font-size: 13px; transition: background .15s var(--easing), color .15s var(--easing), box-shadow .15s; }
+.sidebar { border-right: 1px solid var(--border); }
+.nav-item { font-size: 13px; transition: background .12s, color .12s, box-shadow .12s; }
+.nav-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(129,140,248,.16) 0%, rgba(129,140,248,.04) 100%);
+  background: var(--accent-dim);
   color: var(--accent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
-html.light .nav-item.active {
-  background: linear-gradient(90deg, rgba(99,102,241,.12) 0%, rgba(99,102,241,.03) 100%);
-  box-shadow: inset 3px 0 0 var(--accent);
-}
+html.light .nav-item:hover { background: rgba(0,0,0,.04); }
+html.light .nav-item.active { background: rgba(0,0,0,.05); color: var(--text); box-shadow: inset 3px 0 0 var(--text); }
+.mob-nav-btn { border-radius: 10px; transition: color .12s, background .12s; }
+.mob-nav-btn.active { color: var(--accent); }
+html.light .mob-nav-btn.active { color: var(--text); }
 
 /* ─── QUICK BAR ──────────────────────────────────────────────────── */
-.quick-bar {
-  background: rgba(11,14,22,.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-html.light .quick-bar {
-  background: rgba(255,255,255,.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
+.quick-bar { background: var(--sidebar-bg); backdrop-filter: none; }
+html.light .quick-bar { background: var(--sidebar-bg); backdrop-filter: none; }
+.ql-teams  { background: rgba(255,255,255,.04); color: var(--text-sec); border-color: var(--border); }
+.ql-teams:hover  { background: rgba(255,255,255,.08); color: var(--text); }
+.ql-outlook { background: rgba(255,255,255,.04); color: var(--text-sec); border-color: var(--border); }
+.ql-outlook:hover { background: rgba(255,255,255,.08); color: var(--text); }
+html.light .ql-teams, html.light .ql-outlook { background: rgba(0,0,0,.03); color: var(--text-sec); border-color: var(--border); }
+html.light .ql-teams:hover, html.light .ql-outlook:hover { background: rgba(0,0,0,.06); color: var(--text); }
+.mobile-nav { background: var(--sidebar-bg); backdrop-filter: none; -webkit-backdrop-filter: none; border-top: 1px solid var(--border); }
+html.light .mobile-nav { background: var(--sidebar-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 
 /* ─── PAGE HEADER ────────────────────────────────────────────────── */
-.page-hd {
-  background: rgba(12,15,22,.86);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-html.light .page-hd { background: rgba(241,244,249,.9); }
-#page-notes .page-hd { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+.page-hd { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.light .page-hd { background: var(--bg); }
+#page-notes .page-hd { background: var(--bg); }
+
+/* ─── SEARCH ─────────────────────────────────────────────────────── */
+.search-inp { border-radius: 8px; background: rgba(255,255,255,.05); border-color: var(--border); }
+.search-inp:focus { border-color: var(--border-hi); box-shadow: none; width: 230px; background: var(--input-bg); }
+html.light .search-inp { background: rgba(0,0,0,.04); }
+html.light .search-inp:focus { background: var(--input-bg); }
+.search-results { border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+html.light .search-results { box-shadow: 0 8px 32px rgba(0,0,0,.12); }
 
 /* ─── CARDS ──────────────────────────────────────────────────────── */
-.card { border-radius: 16px; }
-.stat-card { border-radius: 16px; }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.28); }
-.note-card { border-radius: 14px; transition: border-color .18s, background .18s, box-shadow .18s; }
-.note-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.22); border-color: var(--border-hi); }
-.note-card.pinned { border-color: rgba(129,140,248,.3); }
-.hw-card { border-radius: 12px; transition: border-color .18s, box-shadow .18s; }
-.hw-card:hover { transform: none; border-color: var(--border-hi); box-shadow: 0 3px 14px rgba(0,0,0,.2); }
-.grade-card { border-radius: 12px; transition: border-color .18s, box-shadow .18s; }
-.grade-card:hover { transform: none; border-color: var(--border-hi); box-shadow: 0 3px 12px rgba(0,0,0,.18); }
-.grade-summary-card { border-radius: 14px; transition: border-color .18s, box-shadow .18s; }
-.grade-summary-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.2); border-color: var(--border-hi); }
-.file-card { border-radius: 12px; transition: border-color .18s, background .18s, box-shadow .18s; }
-.file-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.22); }
-.settings-section { border-radius: 16px; }
-.folder-block { border-radius: 12px; }
-.quote-card { border-radius: 16px; }
-.urgent-card { border-radius: 16px; }
-.weekly-cell { border-radius: 12px; }
-.cal-day-item { border-radius: 10px; }
-.cal-event-item { border-radius: 10px; }
+.card { border-radius: 12px; border-color: var(--border); box-shadow: none; }
+.stat-card { border-radius: 12px; transition: background .15s; }
+.stat-card:hover { transform: none; box-shadow: none; background: var(--card-hover); }
+.note-card { border-radius: 12px; transition: border-color .15s, background .15s; }
+.note-card:hover { box-shadow: none; border-color: var(--border-hi); background: var(--card-hover); }
+.note-card.pinned { border-color: var(--border-hi); }
+.hw-card { border-radius: 10px; transition: border-color .15s; }
+.hw-card:hover { transform: none; border-color: var(--border-hi); box-shadow: none; }
+.grade-card { border-radius: 10px; transition: border-color .15s; }
+.grade-card:hover { transform: none; border-color: var(--border-hi); box-shadow: none; }
+.grade-summary-card { border-radius: 12px; transition: border-color .15s; }
+.grade-summary-card:hover { box-shadow: none; border-color: var(--border-hi); }
+.file-card { border-radius: 10px; transition: border-color .15s, background .15s; }
+.file-card:hover { box-shadow: none; border-color: var(--border-hi); }
+.settings-section { border-radius: 12px; }
+.folder-block { border-radius: 10px; }
+.weekly-cell { border-radius: 8px; background: var(--bg); }
+.cal-day-item { border-radius: 8px; }
+.cal-event-item { border-radius: 8px; }
 
 /* ─── BUTTONS ────────────────────────────────────────────────────── */
-.btn { border-radius: 9px; font-weight: 500; transition: all .18s var(--easing); }
-.btn:active:not(:disabled) { transform: scale(.95); }
-.btn-sm { border-radius: 7px; }
+.btn { border-radius: 8px; font-weight: 500; transition: background .12s, color .12s, border-color .12s, transform .1s; }
+.btn:active:not(:disabled) { transform: scale(.96); }
+.btn-sm { border-radius: 6px; }
 .btn-primary {
-  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
-  box-shadow: 0 2px 10px rgba(99,102,241,.32);
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: none;
+  font-weight: 600;
 }
-.btn-primary:hover {
-  filter: brightness(1.10);
-  box-shadow: 0 4px 16px rgba(99,102,241,.44);
-  transform: translateY(-1px);
-}
-.btn-primary:active { transform: translateY(0) scale(.96); box-shadow: 0 1px 5px rgba(99,102,241,.2); }
-html.light .btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  box-shadow: 0 2px 10px rgba(79,70,229,.3);
-}
+.btn-primary:hover { filter: brightness(.9); box-shadow: none; transform: none; }
+.btn-primary:active { transform: scale(.96); filter: brightness(.82); }
+html.light .btn-primary { background: var(--text); color: #ffffff; font-weight: 600; }
+html.light .btn-primary:hover { filter: none; background: #333333; }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text-sec); }
+.btn-ghost:hover { background: rgba(255,255,255,.06); border-color: var(--border-hi); color: var(--text); }
+html.light .btn-ghost { background: transparent; border-color: var(--border); color: var(--text-sec); }
+html.light .btn-ghost:hover { background: rgba(0,0,0,.05); border-color: var(--border-hi); color: var(--text); }
+.btn-danger { background: transparent; color: #888; border: 1px solid var(--border); }
+.btn-danger:hover { background: rgba(255,255,255,.05); color: var(--text); border-color: var(--border-hi); }
+
+/* ─── CHECK CIRCLE ───────────────────────────────────────────────── */
+.check-circle { border-color: var(--border-hi); }
+.check-circle:hover { border-color: var(--text-sec); }
+.check-circle.done { background: var(--text-sec); border-color: var(--text-sec); }
+html.light .check-circle { border-color: var(--border-hi); }
+html.light .check-circle.done { background: var(--text-sec); border-color: var(--text-sec); }
 
 /* ─── INPUTS ─────────────────────────────────────────────────────── */
-.fi, .fs, .fta { border-radius: 9px; transition: border-color .18s, box-shadow .18s; padding: 10px 13px; }
-.fi:focus, .fs:focus, .fta:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
-  outline: none;
-}
-.tag-add-inp:focus { border-color: var(--accent); }
-.notes-upload-strip:hover, .notes-upload-strip.drag-over {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
+.fi, .fs, .fta { border-radius: 8px; border-color: var(--border); transition: border-color .15s; padding: 10px 13px; }
+.fi:focus, .fs:focus, .fta:focus { border-color: var(--border-hi); box-shadow: none; outline: none; }
+.tag-add-inp:focus { border-color: var(--border-hi); }
+.notes-upload-strip:hover, .notes-upload-strip.drag-over { border-color: var(--border-hi); background: rgba(255,255,255,.02); }
+html.light .notes-upload-strip:hover, html.light .notes-upload-strip.drag-over { border-color: var(--border-hi); background: rgba(0,0,0,.02); }
 
 /* ─── MODAL ──────────────────────────────────────────────────────── */
-.overlay { background: rgba(0,0,0,.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.overlay { background: rgba(0,0,0,.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .modal {
-  border-radius: 20px;
-  border-color: var(--border-hi);
+  border-radius: 16px;
+  border: 1px solid var(--border-hi);
   background: var(--card-bg);
-  transform: translateY(10px) scale(.98);
-  transition: transform .28s var(--easing);
-  box-shadow: 0 24px 80px rgba(0,0,0,.65);
+  transform: translateY(8px) scale(.98);
+  transition: transform .22s var(--easing);
+  box-shadow: 0 24px 64px rgba(0,0,0,.8);
 }
-html.light .modal { box-shadow: 0 24px 80px rgba(0,0,0,.12); }
+html.light .modal { background: var(--card-bg); box-shadow: 0 24px 64px rgba(0,0,0,.15); }
 .overlay.open .modal { transform: translateY(0) scale(1); }
 .modal-hd { padding: 22px 24px 0; }
 .modal-title { font-size: 15px; font-weight: 700; letter-spacing: -.2px; }
 .modal-body { padding: 16px 24px 24px; }
-.modal-x { border-radius: 8px; font-size: 18px; padding: 4px 7px; }
-.modal-x:hover { background: rgba(255,255,255,.09); color: var(--text); }
+.modal-x { border-radius: 6px; font-size: 18px; padding: 4px 7px; }
+.modal-x:hover { background: rgba(255,255,255,.08); color: var(--text); }
+html.light .modal-x:hover { background: rgba(0,0,0,.06); }
 
 /* ─── FORM LABELS ────────────────────────────────────────────────── */
 .fl  { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
 .fi-lbl { font-size: 11px; font-weight: 600; letter-spacing: .55px; text-transform: uppercase; color: var(--text-muted); }
 
-/* ─── BADGES ─────────────────────────────────────────────────────── */
-.badge { font-size: 10.5px; border-radius: 6px; }
+/* ─── BADGES — semantic status colors ────────────────────────── */
+.badge { font-size: 10.5px; border-radius: 5px; font-weight: 500; }
+.b-overdue  { background: rgba(226,75,74,.14);  color: #E24B4A; border: none; }
+.b-today    { background: rgba(226,75,74,.12);  color: #E24B4A; border: none; }
+.b-tomorrow { background: rgba(239,159,39,.12); color: #EF9F27; border: none; }
+.b-week     { background: rgba(59,130,246,.10); color: #3B82F6; border: none; }
+.b-later    { background: rgba(255,255,255,.04); color: #666666; border: none; }
+.b-done     { background: rgba(29,158,117,.12); color: #1D9E75; border: none; }
+.b-upcoming { background: rgba(55,138,221,.12); color: #378ADD; border: none; }
+.b-archived { background: rgba(255,255,255,.04); color: #555555; border: none; }
+.b-repeat   { background: rgba(255,255,255,.05); color: #888888; border: none; }
+html.light .b-overdue  { background: rgba(220,38,38,.10);  color: #DC2626; }
+html.light .b-today    { background: rgba(220,38,38,.10);  color: #DC2626; }
+html.light .b-tomorrow { background: rgba(180,83,9,.10);   color: #B45309; }
+html.light .b-week     { background: rgba(37,99,235,.10);  color: #2563EB; }
+html.light .b-later    { background: rgba(0,0,0,.04);      color: #a3a3a3; }
+html.light .b-done     { background: rgba(5,150,105,.10);  color: #059669; }
+html.light .b-upcoming { background: rgba(37,99,235,.10);  color: #2563EB; }
+html.light .b-archived { background: rgba(0,0,0,.04);      color: #a3a3a3; }
+html.light .b-repeat   { background: rgba(0,0,0,.04);      color: #737373; }
 
-/* ─── SEARCH ─────────────────────────────────────────────────────── */
-.search-inp { border-radius: 9px; }
-.search-inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); width: 230px; }
-.search-results { border-radius: 14px; }
+/* Priority badges */
+.p-high   { background: rgba(226,75,74,.12);  color: #E24B4A; border: none; }
+.p-medium { background: rgba(239,159,39,.10); color: #EF9F27; border: none; }
+.p-low    { background: rgba(29,158,117,.10); color: #1D9E75; border: none; }
+html.light .p-high   { background: rgba(220,38,38,.10);  color: #DC2626; border: none; }
+html.light .p-medium { background: rgba(180,83,9,.10);   color: #B45309; border: none; }
+html.light .p-low    { background: rgba(5,150,105,.10);  color: #059669; border: none; }
 
-/* ─── SCROLLBAR ──────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: rgba(129,140,248,.18); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(129,140,248,.3); }
-html.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); }
-html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.16); }
+/* Grade badge */
+.grade-badge { background: rgba(255,255,255,.06); color: var(--text-sec); border: 1px solid var(--border); }
+.grade-badge:hover { background: rgba(255,255,255,.1); }
+html.light .grade-badge { background: rgba(0,0,0,.04); color: var(--text-sec); border: 1px solid var(--border); }
 
-/* ─── MOBILE NAV ─────────────────────────────────────────────────── */
-.mobile-nav {
-  background: rgba(11,14,22,.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255,255,255,.06);
+/* Grade avg pill */
+.grade-avg-pill { background: rgba(255,255,255,.06); color: var(--text-sec); border: 1px solid var(--border); }
+html.light .grade-avg-pill { background: rgba(0,0,0,.04); color: var(--text-sec); }
+
+/* ─── STAT CARDS ─────────────────────────────────────────────────── */
+.stat-accent { background: var(--border-hi) !important; }
+
+/* ─── PROGRESS BAR ───────────────────────────────────────────────── */
+.progress-fill { background: var(--accent); }
+.progress-track { background: var(--border); }
+html.light .progress-fill { background: var(--text); }
+
+/* ─── MINI CALENDAR ──────────────────────────────────────────────── */
+.mcal-day.today { background: var(--accent-dim); color: var(--accent); font-weight: 700; }
+html.light .mcal-day.today { background: rgba(0,0,0,.08); color: var(--text); }
+.mcal-day.has-exam::after { background: #378ADD; }
+
+/* ─── CALENDAR ───────────────────────────────────────────────────── */
+.cal-cell.today .cal-num { background: var(--accent); color: #ffffff; }
+.cal-cell.selected .cal-num { background: var(--text) !important; color: var(--bg) !important; }
+html.light .cal-cell.today .cal-num { background: var(--text); color: var(--bg); }
+.cal-cell:hover .cal-num { background: rgba(255,255,255,.08); }
+html.light .cal-cell:hover .cal-num { background: rgba(0,0,0,.06); }
+
+/* ─── CHIPS / FILTER BAR ─────────────────────────────────────────── */
+.chip { border-radius: 7px; font-size: 12px; border-color: var(--border); color: var(--text-sec); }
+.chip:hover { border-color: var(--border-hi); color: var(--text); background: rgba(255,255,255,.03); }
+.chip.active { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
+html.light .chip:hover { background: rgba(0,0,0,.03); }
+html.light .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+
+/* ─── QUICK ENTRY BAR ────────────────────────────────────────────── */
+.qe-bar {
+  border: 1px solid var(--border-hi);
+  box-shadow: none;
+  background: var(--card-bg);
+  border-radius: 12px;
 }
-html.light .mobile-nav {
-  background: rgba(255,255,255,.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0,0,0,.07);
-}
-.mob-nav-btn { border-radius: 12px; transition: color .15s, background .15s; }
+.qe-bar:focus-within { border-color: var(--text-sec); box-shadow: none; }
+.qe-spinner { border-color: var(--border); border-top-color: var(--text-sec); }
 
-/* ─── TYPOGRAPHY IMPROVEMENTS ────────────────────────────────────── */
-.page-title { font-size: 21px; font-weight: 800; letter-spacing: -.5px; }
-.note-title-inp { font-size: 26px; letter-spacing: -.4px; }
-.settings-section-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+/* ─── QUOTE CARD ─────────────────────────────────────────────────── */
+.quote-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; }
+
+/* ─── URGENT CARD ────────────────────────────────────────────────── */
+.urgent-card { background: var(--card-bg); border: 1px solid var(--border-hi); border-radius: 12px; }
+.urgent-label { color: var(--text-sec); }
+
+/* ─── DUE TODAY ──────────────────────────────────────────────────── */
+.due-today { background: transparent; border: 1px solid var(--border-hi); border-radius: 12px; }
+.due-today-hd { color: var(--text); }
+
+/* ─── NOTES ──────────────────────────────────────────────────────── */
+.notes-subj-btn.active { background: rgba(255,255,255,.06); color: var(--text); }
+html.light .notes-subj-btn.active { background: rgba(0,0,0,.05); }
+.note-card-btn.pin-active { color: var(--text-sec); }
 
 /* ─── FILE OPEN BUTTON ───────────────────────────────────────────── */
 .file-open-btn {
-  background: var(--accent-dim);
-  border: 1px solid rgba(129,140,248,.28);
-  color: var(--accent);
-  border-radius: 8px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  border-radius: 7px;
 }
-.file-open-btn:hover { background: rgba(129,140,248,.2); border-color: rgba(129,140,248,.42); }
+.file-open-btn:hover { background: rgba(255,255,255,.09); border-color: var(--border-hi); color: var(--text); }
+html.light .file-open-btn { background: rgba(0,0,0,.04); border-color: var(--border); color: var(--text-sec); }
+html.light .file-open-btn:hover { background: rgba(0,0,0,.07); }
 
-/* ─── MISC ELEMENTS ──────────────────────────────────────────────── */
-.chip { border-radius: 8px; font-size: 12px; }
-.onedrive-hint { border-radius: 10px; font-size: 11.5px; }
-.setup-card { border-radius: 20px; }
-.subj-pick-chip { transition: all .18s var(--easing); }
-.empty { padding: 48px 20px; }
-.empty-icon { font-size: 36px; opacity: .35; margin-bottom: 12px; }
+/* ─── IB ELEMENTS ────────────────────────────────────────────────── */
+.ib-section-hd { color: var(--text-sec); }
+.ib-tag-hl { background: rgba(255,255,255,.06); color: var(--text-sec); }
+.ib-progress-bar { background: var(--text-sec); }
+html.light .ib-tag-hl { background: rgba(0,0,0,.05); color: var(--text-sec); }
+html.light .ib-progress-bar { background: var(--text-sec); }
+.tok-ex { background: rgba(255,255,255,.06); color: var(--text-sec); }
+.tok-pr { background: rgba(255,255,255,.06); color: var(--text-sec); }
+html.light .tok-ex, html.light .tok-pr { background: rgba(0,0,0,.05); color: var(--text-sec); }
+.cas-c, .cas-a, .cas-s { background: rgba(255,255,255,.06); color: var(--text-sec); }
+html.light .cas-c, html.light .cas-a, html.light .cas-s { background: rgba(0,0,0,.05); color: var(--text-sec); }
 
-/* ─── WELCOME SCREEN ─────────────────────────────────────────────── */
-.welcome-screen {
-  background:
-    radial-gradient(ellipse 70% 50% at 50% -5%, rgba(129,140,248,.13) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 88% 85%, rgba(93,202,165,.07) 0%, transparent 50%),
-    var(--bg);
-}
+/* ─── SETUP WIZARD ───────────────────────────────────────────────── */
+.setup-card { border-radius: 16px; background: var(--sidebar-bg); }
+.setup-dot { background: var(--border-hi); }
+.setup-dot.active { background: var(--text); transform: scale(1.2); width: 18px; border-radius: 4px; }
+.setup-dot.done { background: var(--text-sec); opacity: 1; }
+.subj-pick-chip { transition: all .15s; }
+.subj-pick-chip.selected { border-color: var(--text); background: rgba(255,255,255,.06); }
+html.light .subj-pick-chip.selected { border-color: var(--text); background: rgba(0,0,0,.05); }
+.wz-theme-card.selected { border-color: var(--text); box-shadow: none; }
+
+/* ─── WELCOME / BADGE ────────────────────────────────────────────── */
+.welcome-screen { background: var(--bg); }
+.welcome-badge { color: var(--text-sec); background: rgba(255,255,255,.05); border: 1px solid var(--border); }
+html.light .welcome-badge { color: var(--text-sec); background: rgba(0,0,0,.04); border: 1px solid var(--border); }
 .welcome-title { font-size: 44px; font-weight: 900; letter-spacing: -1.2px; }
+.welcome-title em { color: var(--text); }
+
+/* ─── TIP BANNER ─────────────────────────────────────────────────── */
+.tip-banner { background: var(--card-bg); border: 1px solid var(--border-hi); border-radius: 12px; }
 
 /* ─── LOADING SCREEN ─────────────────────────────────────────────── */
-.loading-ring {
-  border: 2.5px solid rgba(129,140,248,.15);
-  border-top-color: var(--accent);
-  border-right-color: rgba(129,140,248,.4);
-  width: 36px; height: 36px;
-}
+.loading-ring { border: 2px solid var(--border); border-top-color: var(--text-sec); width: 32px; height: 32px; }
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─── TYPOGRAPHY ─────────────────────────────────────────────────── */
+.page-title { font-size: 21px; font-weight: 700; letter-spacing: -.4px; }
+.note-title-inp { font-size: 26px; letter-spacing: -.4px; }
+.settings-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); }
+.card-title { font-size: 13px; font-weight: 600; color: var(--text-sec); letter-spacing: -.1px; }
+.card-link { color: var(--text-muted); }
+.card-link:hover { color: var(--text-sec); text-decoration: none; }
+.logo em { color: var(--text); font-style: normal; }
+
+/* ─── GRADE SCORE ────────────────────────────────────────────────── */
+.grade-score { color: var(--text); }
+
+/* ─── MISC ───────────────────────────────────────────────────────── */
+.onedrive-hint { border-radius: 8px; font-size: 11.5px; }
+.empty { padding: 48px 20px; }
+.empty-icon { font-size: 32px; opacity: .25; margin-bottom: 10px; }
+.pin-icon { color: var(--text-muted); }
+
+/* ─── PRIORITY LABELS ────────────────────────────────────────────── */
+.priority-high   { color: var(--text); }
+.priority-medium { color: var(--text-sec); }
+.priority-low    { color: var(--text-muted); }
+.note-save-ind.saving { color: var(--text-muted); }
+.note-save-ind.saved  { color: var(--text-sec); }
 
 /* ─── FOCUS VISIBLE ──────────────────────────────────────────────── */
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 1px solid var(--border-hi); outline-offset: 2px; border-radius: 4px; }
 button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 
 /* ─── REDUCED MOTION ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ─── BASE CSS CLEANUP — erase remaining hardcoded colors ────────── */
+.file-del { background: rgba(255,255,255,.06); color: var(--text-muted); border: 1px solid var(--border); }
+.file-del:hover { background: rgba(255,255,255,.1); color: var(--text); }
+html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); border-color: var(--border); }
+.qe-status.ok  { color: var(--text-sec); }
+.qe-status.err { color: var(--text-sec); }
+.urgent-card { background: var(--card-bg); border: 1px solid var(--border-hi); }
+.urgent-label { color: var(--text-sec); font-size: 10px; font-weight: 600; }
+
+/* ─── POMODORO FOCUS TIMER ───────────────────────────────────────── */
+.pom-focus-btn {
+  padding: 3px 8px; font-size: 11px; min-height: 26px;
+  border-radius: 7px; line-height: 1;
+}
+
+/* ─── GLOBAL QUICK-ADD OVERLAY ───────────────────────────────────── */
+#qk-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+#qk-panel {
+  display: none; position: fixed; top: 18%; left: 50%;
+  transform: translateX(-50%); z-index: 901;
+  width: min(580px, 92vw);
+}
+#qk-backdrop.open { display: block; }
+#qk-panel.open    { display: block; animation: qkIn .18s cubic-bezier(.4,0,.2,1); }
+@keyframes qkIn {
+  from { opacity:0; transform:translateX(-50%) translateY(-10px) scale(.97); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+}
+#qk-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-hi);
+  border-radius: 18px;
+  box-shadow: 0 28px 88px rgba(0,0,0,.65);
+  padding: 16px 0 14px;
+  overflow: hidden;
+}
+.qk-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 16px; font-weight: 500; color: var(--text);
+  font-family: inherit; touch-action: manipulation;
+}
+.qk-input::placeholder { color: var(--text-muted); }
+.qk-esc-hint {
+  font-size: 11px; padding: 2px 7px; border-radius: 5px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text-muted); font-family: inherit; flex-shrink: 0;
+}
+#qk-preview { min-height: 20px; padding: 4px 16px 0; }
+.qk-preview-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 10px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.qk-hint {
+  padding: 6px 10px; font-size: 11.5px; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.qk-hint kbd {
+  display: inline-flex; align-items: center;
+  font-size: 10.5px; padding: 2px 6px; border-radius: 5px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text-muted); font-family: inherit;
 }
 </style>
 </head>
@@ -1171,6 +1343,12 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
           </div>
           <div class="card">
             <div class="card-hd">
+              <span class="card-title">Study Streak</span>
+            </div>
+            <div class="card-body" id="dash-streak"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd">
               <span class="card-title">Upcoming Exams</span>
               <span class="card-link" onclick="go('exams')">View all →</span>
             </div>
@@ -1181,6 +1359,13 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
               <span class="card-title">Recently Viewed</span>
             </div>
             <div class="card-body" id="dash-recent"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-title">Focus Timer</span>
+              <span style="font-size:11px;color:var(--text-muted)">Pomodoro 25/5</span>
+            </div>
+            <div class="card-body" id="pom-card"></div>
           </div>
         </div>
       </div>
@@ -1445,6 +1630,7 @@ let darkMode      = true;
 let calFullscreen = false;
 let selectedCalDay= null;
 let openFolders   = new Set();
+let pom = { running:false, secs:25*60, total:25*60, isBreak:false, taskId:null, taskTitle:'', iv:null };
 
 /* ─── PERSISTENCE ────────────────────────────────────────────────── */
 function save() {
@@ -1953,7 +2139,7 @@ function dismissWelcome() {
 
 /* ─── ONBOARDING TIPS ────────────────────────────────────────────── */
 const TIPS = {
-  dashboard: { icon:'📊', title:'Your command centre', body:'See today\'s pending tasks, upcoming exams, your weekly progress, and the most urgent thing at a glance.' },
+
   homework:  { icon:'✅', title:'Manage your homework', body:'Add tasks with due dates and priorities. Mark them done as you go. Press H anywhere to add a new task quickly.' },
   exams:     { icon:'📋', title:'Track your exams', body:'Log exam dates, times, and rooms. Add your grade afterwards. Press E anywhere to add an exam.' },
   calendar:  { icon:'🗓️', title:'See everything in one view', body:'Click any day to see what\'s due. Use + Event to add custom events like study sessions or sports.' },
@@ -2280,7 +2466,7 @@ function saveName() {
   S.settings.name = v;
   save();
   const el = document.getElementById('dash-greeting');
-  if (el) el.textContent = v ? `Hello, ${v}` : 'Dashboard';
+  if (el) el.textContent = v ? `Hello, ${v.charAt(0).toUpperCase()+v.slice(1)}` : 'Dashboard';
 }
 
 function previewSubjColor(id, color) {
@@ -2340,7 +2526,7 @@ function renderDash() {
   document.getElementById('dash-date').textContent =
     now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const greet = document.getElementById('dash-greeting');
-  if (greet) greet.textContent = S.settings?.name ? `Hello, ${S.settings.name}` : 'Dashboard';
+  if (greet) { const n=S.settings?.name; greet.textContent = n ? `Hello, ${n.charAt(0).toUpperCase()+n.slice(1)}` : 'Dashboard'; }
 
   // Daily quote
   const qIdx = Math.floor(Date.now()/86400000) % QUOTES.length;
@@ -2355,10 +2541,10 @@ function renderDash() {
   const upExams = S.exams.filter(e=>e.date>=td).length;
 
   document.getElementById('dash-stats').innerHTML = [
-    { v:pending, lbl:'Pending Tasks',  c:'#7F77DD' },
-    { v:overdue, lbl:'Overdue',        c:'#f85149' },
-    { v:done,    lbl:'Completed',      c:'#1D9E75' },
-    { v:upExams, lbl:'Upcoming Exams', c:'#D4537E' },
+    { v:pending, lbl:'Pending Tasks',  c:'var(--border-hi)' },
+    { v:overdue, lbl:'Overdue',        c:'var(--border-hi)' },
+    { v:done,    lbl:'Completed',      c:'var(--border-hi)' },
+    { v:upExams, lbl:'Upcoming Exams', c:'var(--border-hi)' },
   ].map(x=>`
     <div class="stat-card">
       <div class="stat-accent" style="background:${x.c}"></div>
@@ -2445,7 +2631,10 @@ function renderDash() {
     .sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,8);
   document.getElementById('dash-hw').innerHTML = hw.length ? hw.map(h=>{
     const s=subj(h.subjectId), u=urgency(h.dueDate,h.done);
+    const sess=pomGetCount(h.id);
+    const isActive=pom.taskId===h.id&&pom.running;
     return `<div class="hw-row">
+      <div class="hw-bar" style="background:${s?.color||'var(--border-hi)'}"></div>
       <div class="check-circle${h.done?' done':''}" onclick="toggleHw('${h.id}')"></div>
       <div class="hw-info">
         <div class="hw-name${h.done?' done':''}">${esc(h.title)}</div>
@@ -2455,7 +2644,14 @@ function renderDash() {
           <span class="badge ${priCls(h.priority)}" style="font-size:10px">${priLabel(h.priority)}</span>
         </div>
       </div>
-      <span class="badge ${u.cls}">${u.lbl}</span>
+      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+        ${sess?`<span style="font-size:10px;color:var(--text-muted)">🍅×${sess}</span>`:''}
+        <button class="btn btn-ghost btn-sm pom-focus-btn" onclick="pomStartTask('${h.id}')" title="Start focus timer"
+          style="${isActive?'color:var(--text);background:var(--accent-dim);border-color:var(--border-hi)':''}">
+          ${isActive?'⏸':'▶'}
+        </button>
+        <span class="badge ${u.cls}">${u.lbl}</span>
+      </div>
     </div>`;
   }).join('') : `<div class="empty" style="padding:20px 0"><div class="empty-icon" style="font-size:28px">✅</div><div class="empty-text">All clear!</div></div>`;
 
@@ -2509,6 +2705,8 @@ function renderDash() {
   } else if (recentCard) { recentCard.style.display='none'; }
 
   renderMiniCal();
+  renderStreak();
+  pomRender();
 }
 
 function getWeekStart() {
@@ -2631,6 +2829,7 @@ function toggleHw(id) {
   const h=S.homework.find(x=>x.id===id);
   if (!h) return;
   h.done=!h.done;
+  if (h.done) recordStudyDay();
   if (!h.done) { h.archived=false; }
   if (h.done && h.repeat && h.repeat!=='none') {
     const nextDate = calcNextDate(h.dueDate, h.repeat);
@@ -3063,6 +3262,7 @@ function saveNoteNow() {
   if (contentEl) note.content=contentEl.innerHTML;
   note.updatedAt=Date.now();
   save();
+  recordStudyDay();
   const ind=document.getElementById('note-save-ind');
   if (ind) { ind.textContent='● Saved'; ind.className='note-save-ind saved'; }
 }
@@ -3900,6 +4100,196 @@ function fireNotifications() {
   });
 }
 
+/* ─── POMODORO FOCUS TIMER ───────────────────────────────────────── */
+function pomGetCount(taskId) {
+  try { const s=JSON.parse(localStorage.getItem('sh_sessions')||'{}'); return s[taskId]||0; } catch(_){return 0;}
+}
+function pomAddSession(taskId) {
+  try { const s=JSON.parse(localStorage.getItem('sh_sessions')||'{}'); s[taskId]=(s[taskId]||0)+1; localStorage.setItem('sh_sessions',JSON.stringify(s)); } catch(_){}
+}
+function pomStartTask(taskId) {
+  const hw=S.homework.find(h=>h.id===taskId);
+  if (!hw) return;
+  if (pom.running&&pom.taskId===taskId) { pomPause(); return; }
+  clearInterval(pom.iv);
+  if (pom.taskId!==taskId) { pom.secs=25*60; pom.total=25*60; pom.isBreak=false; }
+  pom.running=true; pom.taskId=taskId; pom.taskTitle=hw.title;
+  pom.iv=setInterval(pomTick,1000);
+  pomRender();
+  if (activePage==='dashboard') renderDash();
+}
+function pomStartFree() {
+  if (pom.running) { pomPause(); return; }
+  if (!pom.taskId) { pom.taskId='free'; pom.taskTitle='Free study'; }
+  clearInterval(pom.iv);
+  pom.running=true;
+  pom.iv=setInterval(pomTick,1000);
+  pomRender();
+}
+function pomPause() {
+  clearInterval(pom.iv); pom.running=false; pomRender();
+  if (activePage==='dashboard') renderDash();
+}
+function pomReset() {
+  clearInterval(pom.iv);
+  pom={running:false,secs:25*60,total:25*60,isBreak:false,taskId:null,taskTitle:'',iv:null};
+  pomRender();
+  if (activePage==='dashboard') renderDash();
+}
+function pomTick() {
+  pom.secs--;
+  if (pom.secs<=0) {
+    clearInterval(pom.iv); pom.running=false;
+    if (!pom.isBreak) {
+      pomAddSession(pom.taskId);
+      recordStudyDay();
+      if (Notification.permission==='granted')
+        new Notification('🍅 Focus done!',{body:'Take a 5-min break.',icon:'icons/icon-192.png'});
+      pom.isBreak=true; pom.secs=5*60; pom.total=5*60;
+      pom.iv=setInterval(pomTick,1000); pom.running=true;
+    } else {
+      pom.isBreak=false; pom.secs=25*60; pom.total=25*60;
+      if (Notification.permission==='granted')
+        new Notification('☕ Break over!',{body:'Ready for another session?',icon:'icons/icon-192.png'});
+    }
+    if (activePage==='dashboard') renderDash();
+  }
+  pomRender();
+}
+function pomRender() {
+  const el=document.getElementById('pom-card');
+  if (!el) return;
+  const mins=String(Math.floor(pom.secs/60)).padStart(2,'0');
+  const secsD=String(pom.secs%60).padStart(2,'0');
+  const pct=(pom.total-pom.secs)/pom.total;
+  const circ=2*Math.PI*36;
+  const offset=circ-(pct*circ);
+  const color=pom.isBreak?'var(--text-sec)':'var(--accent)';
+  const sessions=pom.taskId&&pom.taskId!=='free'?pomGetCount(pom.taskId):0;
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="position:relative;width:84px;height:84px;flex-shrink:0">
+        <svg width="84" height="84" viewBox="0 0 84 84">
+          <circle cx="42" cy="42" r="36" fill="none" stroke="var(--border)" stroke-width="5"/>
+          <circle cx="42" cy="42" r="36" fill="none" stroke="${color}" stroke-width="5"
+            stroke-linecap="round"
+            stroke-dasharray="${circ.toFixed(2)}"
+            stroke-dashoffset="${offset.toFixed(2)}"
+            transform="rotate(-90 42 42)"
+            style="transition:stroke-dashoffset .9s ease"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-size:19px;font-weight:800;letter-spacing:-.5px;color:var(--text);line-height:1">${mins}:${secsD}</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-top:2px">${pom.isBreak?'break':'focus'}</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">${esc(pom.taskTitle)||'No task selected'}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">${sessions?`🍅 ${sessions} session${sessions!==1?'s':''} today`:'Click ▶ on any task below to focus'}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" onclick="${pom.running?'pomPause()':'pomStartFree()'}" style="font-size:12px">
+            ${pom.running?(pom.isBreak?'⏸ Pause break':'⏸ Pause'):'▶ Start'}
+          </button>
+          ${pom.taskId?`<button class="btn btn-ghost btn-sm" onclick="pomReset()" style="font-size:12px">↺ Reset</button>`:''}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── STUDY STREAK ───────────────────────────────────────────────── */
+function getStreak() {
+  try { return JSON.parse(localStorage.getItem('sh_streak')||'{"count":0,"lastDate":"","best":0}'); } catch(_){return{count:0,lastDate:'',best:0};}
+}
+function recordStudyDay() {
+  const td=todayStr(), st=getStreak();
+  if (st.lastDate===td) return;
+  const yest=dateStrOffset(-1);
+  st.count=(st.lastDate===yest)?st.count+1:1;
+  st.lastDate=td;
+  if (st.count>(st.best||0)) st.best=st.count;
+  localStorage.setItem('sh_streak',JSON.stringify(st));
+  renderStreak();
+}
+function renderStreak() {
+  const el=document.getElementById('dash-streak');
+  if (!el) return;
+  const st=getStreak();
+  const td=todayStr();
+  const active=st.lastDate===td;
+  const emoji=st.count>=30?'🏆':st.count>=14?'🔥':st.count>=7?'⚡':st.count>=3?'✨':'📚';
+  const milestone=st.count===7?'One week!':st.count===14?'Two weeks!':st.count===30?'One month!':st.count===100?'Legend!':'';
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="font-size:36px;line-height:1">${emoji}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:30px;font-weight:900;letter-spacing:-1px;color:var(--accent)">${st.count}</span>
+          <span style="font-size:13px;color:var(--text-muted)">day${st.count!==1?'s':''}</span>
+          ${milestone?`<span style="font-size:11px;font-weight:600;color:var(--text-sec)">🎉 ${milestone}</span>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">Best: ${st.best||st.count} day${(st.best||st.count)!==1?'s':''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        ${active
+          ?`<div style="font-size:11px;font-weight:600;color:var(--text-sec)">Today ✓</div>`
+          :`<div style="font-size:11px;color:var(--text-muted)">Study today<br>to keep going</div>`}
+      </div>
+    </div>`;
+}
+
+/* ─── GLOBAL QUICK-ADD ───────────────────────────────────────────── */
+function openQuickAdd() {
+  document.getElementById('qk-backdrop').classList.add('open');
+  document.getElementById('qk-panel').classList.add('open');
+  const inp=document.getElementById('qk-input');
+  if (inp) { inp.value=''; setTimeout(()=>inp.focus(),40); }
+  document.getElementById('qk-preview').innerHTML=`
+    <div class="qk-hint">
+      <span>Type homework, exam, or event — press <strong>Enter</strong> to add</span>
+      <span><kbd>⌘K</kbd> or <kbd>N</kbd> to open · <kbd>Esc</kbd> to close</span>
+    </div>`;
+}
+function closeQuickAdd() {
+  document.getElementById('qk-backdrop').classList.remove('open');
+  document.getElementById('qk-panel').classList.remove('open');
+}
+function qkPreview() {
+  const val=document.getElementById('qk-input').value.trim();
+  const el=document.getElementById('qk-preview');
+  if (!val) {
+    el.innerHTML=`<div class="qk-hint"><span>Type homework, exam, or event — press <strong>Enter</strong> to add</span></div>`;
+    return;
+  }
+  try {
+    const p=parseQuickEntry(val);
+    const s=p.subjectId?subj(p.subjectId):null;
+    const typeLabel=p.type==='homework'?'📝 Homework':p.type==='exam'?'📋 Exam':'📅 Event';
+    el.innerHTML=`<div class="qk-preview-row">
+      <span style="font-size:12px;font-weight:600">${typeLabel}</span>
+      ${s?`<span style="color:${s.color};font-size:12px;font-weight:700">${esc(s.name)}</span>`:''}
+      <span style="font-size:13px;font-weight:600;color:var(--text)">${esc(p.title)}</span>
+      <span style="color:var(--text-muted);font-size:12px">· ${fmtDate(p.date)}</span>
+      ${p.priority!=='medium'?`<span class="badge ${p.priority==='high'?'b-high':'b-low'}" style="font-size:10px">${p.priority}</span>`:''}
+    </div>`;
+  } catch(_){ el.innerHTML=''; }
+}
+function qkKeydown(e) {
+  if (e.key==='Escape') { closeQuickAdd(); return; }
+  if (e.key!=='Enter') return;
+  e.preventDefault();
+  const val=document.getElementById('qk-input').value.trim();
+  if (!val) return;
+  try {
+    const p=parseQuickEntry(val);
+    const msg=applyParsed(p,val);
+    document.getElementById('qk-preview').innerHTML=`<div style="padding:6px 10px;color:var(--text-sec);font-weight:600;font-size:13px">${esc(msg)}</div>`;
+    document.getElementById('qk-input').value='';
+    setTimeout(closeQuickAdd,900);
+  } catch(err) {
+    document.getElementById('qk-preview').innerHTML=`<div style="padding:6px 10px;color:var(--text-sec);font-size:12px">⚠️ ${esc(err.message||'Could not parse.')}</div>`;
+  }
+}
+
 /* ─── INIT ───────────────────────────────────────────────────────── */
 function init() {
   load();
@@ -3929,13 +4319,14 @@ function init() {
   }
 
   document.addEventListener('keydown',e=>{
-    if (e.key==='Escape') { closeModal(); closeSearch(); }
+    if (e.key==='Escape') { closeModal(); closeSearch(); closeQuickAdd(); }
     if (e.key==='s'&&(e.metaKey||e.ctrlKey)&&openNoteId) { e.preventDefault(); saveNoteNow(); }
+    if ((e.metaKey||e.ctrlKey)&&e.key==='k') { e.preventDefault(); openQuickAdd(); return; }
     // Global shortcuts — skip when typing in an input/textarea/contenteditable
     const tag=document.activeElement?.tagName;
     const inInput=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement?.isContentEditable;
     if (!inInput && !document.getElementById('overlay')?.classList.contains('open')) {
-      if (e.key==='n'||e.key==='N') { e.preventDefault(); go('notes'); newNote(); }
+      if (e.key==='n'||e.key==='N') { e.preventDefault(); openQuickAdd(); }
       if (e.key==='h'||e.key==='H') { e.preventDefault(); go('homework'); openHwModal(); }
       if (e.key==='e'||e.key==='E') { e.preventDefault(); go('exams'); openExamModal(); }
       if (e.key==='/'){ e.preventDefault(); const s=document.getElementById('search-inp'); if(s) s.focus(); }
@@ -3944,6 +4335,21 @@ function init() {
 }
 init();
 </script>
+
+<!-- ═══════════════════ GLOBAL QUICK-ADD ══════════════════════════ -->
+<div id="qk-backdrop" onclick="closeQuickAdd()"></div>
+<div id="qk-panel">
+  <div id="qk-wrap">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 16px">
+      <span style="font-size:18px;opacity:.45">✨</span>
+      <input id="qk-input" class="qk-input" type="text" autocomplete="off"
+        placeholder="Add anything… e.g. Maths essay due Friday, high priority"
+        oninput="qkPreview()" onkeydown="qkKeydown(event)">
+      <kbd class="qk-esc-hint">esc</kbd>
+    </div>
+    <div id="qk-preview"></div>
+  </div>
+</div>
 
 </body>
 </html>
