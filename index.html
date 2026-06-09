@@ -4291,6 +4291,62 @@ function qkKeydown(e) {
 }
 
 /* ─── INIT ───────────────────────────────────────────────────────── */
+/* ─── JARVIS BRIDGE ──────────────────────────────────────────────── */
+function showJarvisToast(msg) {
+  let t = document.getElementById('jarvis-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'jarvis-toast';
+    t.style.cssText = [
+      'position:fixed', 'bottom:24px', 'right:24px',
+      'background:#0a1628', 'border:1px solid rgba(0,255,204,.35)',
+      'color:#00ffcc', 'font-family:monospace', 'font-size:13px',
+      'padding:10px 16px', 'border-radius:8px', 'z-index:9999',
+      'opacity:0', 'transition:opacity .3s ease', 'max-width:320px',
+      'box-shadow:0 4px 24px rgba(0,0,0,.6)', 'pointer-events:none'
+    ].join(';');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(() => { t.style.opacity = '0'; }, 4500);
+}
+
+async function fetchJarvisBridge() {
+  try {
+    const res = await fetch('http://localhost:3000/studyhub-bridge');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.pending || !data.pending.length) return;
+    let added = 0;
+    for (const item of data.pending) {
+      const subj = S.settings.subjects.find(
+        s => s.name.toLowerCase().includes((item.subject || '').toLowerCase().trim())
+      ) || S.settings.subjects[0];
+      const subjectId = subj ? subj.id : '';
+      if (item.type === 'exam') {
+        S.exams.push({
+          id: uid(), subjectId,
+          title: item.title || 'Exam', topic: item.title || 'Exam',
+          date: item.due || todayStr(), time: item.time || '',
+          room: item.room || '', grade: '', createdAt: Date.now()
+        });
+      } else {
+        S.homework.push({
+          id: uid(), subjectId,
+          title: item.title || 'Task', dueDate: item.due || todayStr(),
+          description: '', priority: item.priority || 'medium',
+          repeat: 'none', done: false, archived: false, createdAt: Date.now()
+        });
+      }
+      showJarvisToast('Jarvis added: ' + (item.title || (item.type === 'exam' ? 'Exam' : 'Task')));
+      added++;
+    }
+    if (added) { save(); render(activePage); }
+  } catch { /* server not running */ }
+}
+
 function init() {
   load();
 
@@ -4312,6 +4368,10 @@ function init() {
   // Browser notifications
   requestNotifications();
   setTimeout(fireNotifications, 2000);
+
+  // Jarvis bridge — poll for items added via voice
+  setTimeout(fetchJarvisBridge, 1500);
+  setInterval(fetchJarvisBridge, 30000);
 
   // PWA service worker
   if ('serviceWorker' in navigator) {

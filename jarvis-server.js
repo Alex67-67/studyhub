@@ -39,6 +39,18 @@ function json(res, status, obj) {
   res.end(JSON.stringify(obj));
 }
 
+// ─── STUDYHUB BRIDGE ──────────────────────────────────────────────────────────
+const BRIDGE_FILE = path.join(__dirname, 'studyhub-bridge.json');
+
+function readBridge() {
+  try { return JSON.parse(fs.readFileSync(BRIDGE_FILE, 'utf8')); }
+  catch { return { pending: [] }; }
+}
+
+function writeBridge(data) {
+  fs.writeFileSync(BRIDGE_FILE, JSON.stringify(data, null, 2));
+}
+
 // ─── SERVER ───────────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   cors(res);
@@ -164,6 +176,49 @@ const server = http.createServer((req, res) => {
         return;
       }
 
+      // ── LOCAL: StudyHub bridge — extract and store structured item ────────
+      const bridgeKeywords = /\badd\b|\bexam\b|\btest\b|\bhomework\b|\btask\b|\bdue\b|\bremind\b/i;
+      if (bridgeKeywords.test(command)) {
+        const today = new Date().toISOString().slice(0, 10);
+        const extractPrompt =
+          `Today is ${today}. Extract structured data from this voice command: "${command}"\n\n` +
+          `Respond with ONLY a JSON object, no markdown, no explanation:\n` +
+          `{"type":"homework or exam","subject":"subject name or empty string","title":"task or topic title","due":"YYYY-MM-DD or empty string","priority":"high or medium or low","room":"room or empty string","time":"HH:MM or empty string"}\n\n` +
+          `Use type "exam" for tests/exams/quizzes. Use type "homework" for everything else. ` +
+          `Priority defaults to "medium". If no date is mentioned, leave "due" as empty string.`;
+
+        const proc2 = spawn(CLAUDE, ['-p', extractPrompt], {
+          env: { ...process.env },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        let out2 = '', settled2 = false;
+        const t2 = setTimeout(() => {
+          proc2.kill();
+          if (!settled2) { settled2 = true; json(res, 200, { result: 'Sorry, timed out parsing that command.' }); }
+        }, 30000);
+        proc2.stdout.on('data', d => { out2 += d; });
+        proc2.on('close', () => {
+          if (settled2) return;
+          settled2 = true;
+          clearTimeout(t2);
+          try {
+            const clean = stripAnsi(out2).replace(/```json\n?|\n?```/g, '').trim();
+            const item = JSON.parse(clean);
+            const data = readBridge();
+            data.pending.push(item);
+            writeBridge(data);
+            console.log(`  → bridge: added ${item.type} "${item.title}"`);
+            json(res, 200, { result: `Done, added "${item.title}" to StudyHub.` });
+          } catch {
+            json(res, 200, { result: `Sorry, I couldn't parse that. Try: "add homework Maths chapter 5 due Friday"` });
+          }
+        });
+        proc2.on('error', () => {
+          if (!settled2) { settled2 = true; json(res, 200, { result: 'Could not reach Claude to parse that command.' }); }
+        });
+        return;
+      }
+
       // stdin:'ignore' is critical — without it, claude waits 3 s for stdin
       // before starting, and the req 'close' handler (removed) was killing it.
       const proc = spawn(CLAUDE, ['-p', command], {
@@ -219,6 +274,32 @@ const server = http.createServer((req, res) => {
       // NOTE: do NOT attach req.on('close') to kill the proc.
       // req 'close' fires when the HTTP request is fully received (not when
       // the browser disconnects), which would kill claude immediately.
+    });
+    return;
+  }
+
+  // GET /studyhub-bridge — return pending items then clear
+  if (req.method === 'GET' && req.url === '/studyhub-bridge') {
+    const data = readBridge();
+    writeBridge({ pending: [] });
+    json(res, 200, data);
+    return;
+  }
+
+  // POST /add-to-studyhub — append item to bridge
+  if (req.method === 'POST' && req.url === '/add-to-studyhub') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const item = JSON.parse(body);
+        const data = readBridge();
+        data.pending.push(item);
+        writeBridge(data);
+        json(res, 200, { success: true, message: 'Added to StudyHub' });
+      } catch {
+        json(res, 400, { error: 'Invalid JSON' });
+      }
     });
     return;
   }
