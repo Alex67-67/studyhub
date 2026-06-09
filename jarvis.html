@@ -787,6 +787,21 @@ body::before {
   let W, H, cx, cy, R;
   let nodes  = [];
   let pulses = [];
+  let voiceEnergy = 0;   // smoothed 0–1 mic amplitude
+
+  /* ─── VOICE ENERGY SAMPLER ──────────────────────────────────── */
+  // Reads window.jarvisAnalyser set by startAudioViz() in the main script.
+  // Uses window.* because let bindings don't cross <script> tag boundaries in Chrome.
+  function getVoiceEnergy() {
+    const an = window.jarvisAnalyser;
+    if (!an) return 0;
+    const d = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(d);
+    const avg = d.reduce((a, b) => a + b, 0) / d.length;
+    const energy = Math.max(0, Math.min(1, (avg - 10) / 40));
+    console.log('energy:', energy.toFixed(3), '  avg:', avg.toFixed(1));
+    return energy;
+  }
 
   /* ─── STATE ────────────────────────────────────────────────── */
   function getState() {
@@ -897,9 +912,12 @@ body::before {
     for (const p of pulses) p.t += p.speed;
     pulses = pulses.filter(p => p.t < 1);
 
-    // Spawn new pulses
+    // Sample and smooth voice amplitude (exponential moving average)
+    voiceEnergy += (getVoiceEnergy() - voiceEnergy) * 0.15;
+
+    // Spawn new pulses — voice energy adds up to 3× more activity when loud
     const active = getState() !== 'idle';
-    if (Math.random() < (active ? 0.38 : 0.14)) spawnPulse();
+    if (Math.random() < (active ? 0.38 : 0.14) + voiceEnergy * 0.50) spawnPulse();
   }
 
   /* ─── DRAW ─────────────────────────────────────────────────── */
@@ -907,6 +925,12 @@ body::before {
     ctx.clearRect(0, 0, W, H);
 
     const state = getState();
+
+    // Voice-reactive scale: 1.0 (silent) → 1.05 (loud), centred on canvas midpoint
+    const vScale = 1 + voiceEnergy * 0.05;
+    ctx.save();
+    ctx.translate(cx * (1 - vScale), cy * (1 - vScale));
+    ctx.scale(vScale, vScale);
 
     /* ── 1. CONNECTION LINES ──────────────────────────────────── */
     //  Draw every pair of nodes within CONNECT_DIST.
@@ -923,10 +947,10 @@ body::before {
         const d = Math.sqrt(d2);
         const t = 1 - d / CONNECT_DIST;           // 1=close, 0=at limit
 
-        // Line opacity 0.30 → 0.60 based on closeness
-        const alpha = 0.30 + t * 0.30;
-        // Line width 0.5 → 1.0 based on closeness
-        const lw = 0.5 + t * 0.5;
+        // Line opacity and width scale up with voice energy
+        const bright = 1 + voiceEnergy * 1.8;
+        const alpha  = Math.min(1, (0.30 + t * 0.30) * bright);
+        const lw     = 0.5 + t * 0.5 + voiceEnergy * 0.4;
 
         // Choose color from state or node types
         let cr, cg, cb;
@@ -1022,12 +1046,14 @@ body::before {
         ctx.fill();
       }
 
-      // The dot itself
+      // The dot itself — voice energy adds up to 0.55 extra alpha
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.radius, 0, 6.2832);
-      ctx.fillStyle = `rgba(${nr},${ng},${nb},${0.75 + litBoost * 0.25})`;
+      ctx.fillStyle = `rgba(${nr},${ng},${nb},${Math.min(1, 0.75 + litBoost * 0.25 + voiceEnergy * 0.55)})`;
       ctx.fill();
     }
+
+    ctx.restore();   // undo voice-reactive scale transform
   }
 
   /* ─── LOOP ─────────────────────────────────────────────────── */
@@ -1451,8 +1477,9 @@ async function startAudioViz() {
     micStream = permStream;
     audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
     analyser  = audioCtx.createAnalyser();
-    analyser.fftSize = 64;
+    analyser.fftSize = 256;
     audioCtx.createMediaStreamSource(micStream).connect(analyser);
+    window.jarvisAnalyser = analyser;  // expose cross-script — let bindings don't cross <script> tags
 
     const data = new Uint8Array(analyser.frequencyBinCount);
     const wrap = document.getElementById('circle-wrap');
