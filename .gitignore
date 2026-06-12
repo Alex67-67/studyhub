@@ -1,2 +1,22 @@
+# --- secrets (NEVER commit) ---
+secrets.js
+.env
+
+# --- personal data ---
+studyhub-data.json
+studyhub-bridge.json
+jarvis-uploads/
+backups/
+memory/
+CLAUDE.md
+TASKS.md
+dashboard.html
+
+# --- agent / local tooling ---
 .agents/
+.claude/
+
+# --- backups & OS cruft ---
+*.backup
+*.backup.html
 .DS_Store

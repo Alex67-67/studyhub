@@ -76,6 +76,17 @@ body { background: var(--bg); color: var(--text); display: flex; height: 100vh; 
   margin-bottom: 6px; flex-shrink: 0;
 }
 .logo em { font-style: normal; color: var(--accent); }
+.sync-ind {
+  display: flex; align-items: center; gap: 5px; margin-top: 7px;
+  font-size: 10px; font-weight: 600; letter-spacing: .3px;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.sync-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #888; flex-shrink: 0; transition: background .3s;
+}
+.sync-ind.synced .sync-dot { background: #1f9e75; }
+.sync-ind.local  .sync-dot { background: #888; }
 
 .nav-section { padding: 4px 8px 10px; }
 .nav-item {
@@ -237,6 +248,117 @@ button, a, select, input, textarea, label { touch-action: manipulation; }
 .stat-accent { width: 28px; height: 4px; border-radius: 2px; margin-bottom: 12px; }
 .stat-val { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
 .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+
+/* ─── WORKLOAD RADAR ────────────────────────────────────────────── */
+.radar-wrap { margin-bottom: 16px; }
+.radar-warn {
+  font-size: 12.5px; color: var(--text-sec); font-weight: 500;
+  margin-bottom: 9px; display: flex; align-items: center; gap: 6px;
+}
+.radar-warn.heavy { color: #e0a23c; font-weight: 600; }
+.radar-strip {
+  display: flex; align-items: flex-end; gap: 4px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 14px; overflow-x: auto;
+}
+.radar-week { display: flex; gap: 4px; }
+.radar-week + .radar-week {
+  margin-left: 6px; padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+.radar-cell {
+  position: relative; flex: 1 0 auto; width: 26px; height: 38px;
+  border-radius: 7px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.04);
+  border: 1px solid transparent; transition: transform .12s, filter .12s;
+}
+html.light .radar-cell { background: rgba(0,0,0,.04); }
+.radar-cell:hover { transform: translateY(-2px); filter: brightness(1.15); }
+.radar-cell .radar-day { font-size: 11px; font-weight: 600; color: var(--text-sec); }
+.radar-cell.t0 { background: rgba(255,255,255,.04); }
+html.light .radar-cell.t0 { background: rgba(0,0,0,.04); }
+.radar-cell.t1 { background: rgba(63,185,120,.18); }
+.radar-cell.t1 .radar-day { color: #7ee2a8; }
+.radar-cell.t2 { background: rgba(224,162,60,.20); }
+.radar-cell.t2 .radar-day { color: #f0c074; }
+.radar-cell.t3 { background: rgba(229,83,75,.24); }
+.radar-cell.t3 .radar-day { color: #f3938c; }
+.radar-cell.is-today { border-color: var(--accent); }
+.radar-tip {
+  position: fixed; z-index: 9999; display: none; max-width: 240px;
+  background: var(--card-bg); border: 1px solid var(--border-hi);
+  border-radius: 10px; padding: 10px 12px; box-shadow: var(--shadow);
+  font-size: 12px; pointer-events: none;
+}
+.radar-tip.show { display: block; }
+.radar-tip .rt-date { font-weight: 700; font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.radar-tip .rt-row { display: flex; align-items: center; gap: 6px; color: var(--text);
+  margin-top: 4px; line-height: 1.3; }
+.radar-tip .rt-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.radar-tip .rt-badge { font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .4px; background: rgba(255,255,255,.1); color: var(--text-sec);
+  padding: 1px 5px; border-radius: 4px; }
+.radar-tip .rt-empty { color: var(--text-muted); }
+
+/* ─── TIMETABLE ─────────────────────────────────────────────────── */
+.tt-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.tt-col {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 10px; min-height: 120px;
+  display: flex; flex-direction: column;
+}
+.tt-col-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 700; color: var(--text-sec);
+  text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 4px 8px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+}
+.tt-col-hd.is-today { color: var(--accent); }
+.tt-add {
+  cursor: pointer; width: 20px; height: 20px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 15px; line-height: 1;
+  background: rgba(255,255,255,.05); border: none;
+}
+.tt-add:hover { color: var(--text); background: rgba(255,255,255,.1); }
+.tt-lessons { display: flex; flex-direction: column; gap: 6px; }
+.tt-lesson {
+  cursor: pointer; border-radius: 9px; padding: 8px 9px;
+  border-left: 3px solid var(--c, #888);
+  background: color-mix(in srgb, var(--c, #888) 14%, transparent);
+  transition: filter .12s, transform .12s;
+}
+.tt-lesson:hover { filter: brightness(1.15); transform: translateX(1px); }
+.tt-l-subj { font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.tt-l-time { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
+.tt-l-meta { font-size: 10.5px; color: var(--text-muted); margin-top: 1px; }
+.tt-col-empty { font-size: 11px; color: var(--text-muted); text-align: center; padding: 14px 0; }
+
+/* Dashboard "Today" lesson strip */
+.today-strip {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 16px;
+}
+.today-strip-hd {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .6px; margin-bottom: 9px;
+}
+.today-strip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.today-pill {
+  flex: 0 0 auto; display: flex; flex-direction: column; gap: 1px;
+  border-radius: 10px; padding: 7px 11px; min-width: 96px;
+  border-left: 3px solid var(--c, #888);
+  background: color-mix(in srgb, var(--c, #888) 12%, transparent);
+  opacity: .55;
+}
+.today-pill.active { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.today-pill-time { font-size: 10.5px; font-weight: 600; color: var(--text-sec); }
+.today-pill-subj { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.today-pill-room { font-size: 10.5px; color: var(--text-muted); }
+.today-strip-empty { font-size: 13px; color: var(--text-muted); }
+@media (max-width: 760px) { .tt-grid { grid-template-columns: 1fr; } }
 
 /* Progress bar */
 .progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
@@ -1158,6 +1280,112 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
   background: var(--bg); border: 1px solid var(--border);
   color: var(--text-muted); font-family: inherit;
 }
+
+/* ─── REVISION / FLASHCARDS ─────────────────────────────────────── */
+.nav-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; margin-left: auto;
+  border-radius: 9px; background: var(--accent); color: #fff;
+  font-size: 10.5px; font-weight: 700;
+}
+.rev-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 18px; }
+.rev-stat {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 16px;
+}
+.rev-stat .rs-num { font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+.rev-stat .rs-lbl { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.rev-stat.due .rs-num { color: var(--accent); }
+
+.rev-deck-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background .12s;
+}
+.rev-deck-row:last-child { border-bottom: none; }
+.rev-deck-row:hover { background: var(--card-hover); }
+.rev-card-front { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rev-card-back-prev { font-size: 12.5px; color: var(--text-muted); flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rev-deck-tag {
+  font-size: 10.5px; padding: 2px 8px; border-radius: 6px; flex-shrink: 0;
+  background: var(--input-bg); border: 1px solid var(--border); color: var(--text-sec);
+}
+.rev-due-badge {
+  font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; flex-shrink: 0;
+}
+.rev-due-badge.due  { background: rgba(127,119,221,.15); color: var(--accent); }
+.rev-due-badge.later { background: var(--input-bg); color: var(--text-muted); }
+.rev-row-btn {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 13px; padding: 4px 6px; border-radius: 6px; flex-shrink: 0;
+}
+.rev-row-btn:hover { background: var(--card-hover); color: var(--text); }
+
+/* Full-screen review mode */
+#rev-overlay {
+  position: fixed; inset: 0; z-index: 260; display: none;
+  background: var(--bg); flex-direction: column;
+}
+#rev-overlay.open { display: flex; animation: fadeIn .18s ease; }
+.rev-hd {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.rev-hd-title { font-size: 14px; font-weight: 700; }
+.rev-hd-sub   { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.rev-progress-track { height: 3px; background: var(--border); flex-shrink: 0; }
+.rev-progress-fill  { height: 100%; background: var(--accent); width: 0%; transition: width .25s ease; }
+.rev-stage {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; min-height: 0;
+}
+.rev-flip { width: min(660px, 100%); height: min(400px, 56vh); perspective: 1200px; cursor: pointer; }
+.rev-flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transform-style: preserve-3d; transition: transform .38s cubic-bezier(.3,.9,.3,1);
+}
+.rev-flip.flipped .rev-flip-inner { transform: rotateY(180deg); }
+.rev-face {
+  position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px 34px; overflow-y: auto; text-align: center;
+}
+.rev-face-lbl {
+  position: absolute; top: 14px; left: 18px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.rev-face-txt { font-size: 19px; font-weight: 600; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.rev-face.back { transform: rotateY(180deg); }
+.rev-face.back .rev-face-txt { font-size: 17px; font-weight: 500; }
+.rev-controls { padding: 18px 22px 26px; flex-shrink: 0; display: flex; justify-content: center; }
+.rev-rate-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.rev-rate-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-width: 96px; padding: 10px 16px; border-radius: 12px; cursor: pointer;
+  border: 1px solid; background: none; font-family: inherit;
+  font-size: 13.5px; font-weight: 700; transition: transform .1s, filter .15s;
+}
+.rev-rate-btn:hover { transform: translateY(-1px); filter: brightness(1.15); }
+.rev-rate-btn .rr-key { font-size: 10px; font-weight: 600; opacity: .65; }
+.rev-rate-btn .rr-int { font-size: 10.5px; font-weight: 500; opacity: .8; }
+.rr-again { color: #ef4444; border-color: rgba(239,68,68,.35);  background: rgba(239,68,68,.08); }
+.rr-hard  { color: #f59e0b; border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.08); }
+.rr-good  { color: #22c55e; border-color: rgba(34,197,94,.35);  background: rgba(34,197,94,.08); }
+.rr-easy  { color: #3b82f6; border-color: rgba(59,130,246,.35); background: rgba(59,130,246,.08); }
+.rev-flip-hint { font-size: 12.5px; color: var(--text-muted); }
+.rev-summary { text-align: center; max-width: 420px; }
+.rev-summary .rsm-big { font-size: 42px; margin-bottom: 8px; }
+.rev-summary h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.rev-summary p  { font-size: 13.5px; color: var(--text-sec); line-height: 1.6; margin-bottom: 18px; }
+@media (max-width: 640px) {
+  .rev-rate-btn { min-width: 72px; padding: 9px 10px; }
+  .rev-face-txt { font-size: 16.5px; }
+}
 </style>
 </head>
 <body>
@@ -1204,7 +1432,11 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
 
 <!-- ═══════════════════════════ SIDEBAR ════════════════════════════ -->
 <aside class="sidebar">
-  <div class="logo">Study<em>Hub</em></div>
+  <div class="logo">Study<em>Hub</em>
+    <span id="sync-indicator" class="sync-ind local" title="Sync status">
+      <span class="sync-dot"></span><span class="sync-text">local only</span>
+    </span>
+  </div>
 
   <nav class="nav-section">
     <div class="nav-item active" data-page="dashboard" onclick="go('dashboard')">
@@ -1238,6 +1470,13 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
       </svg>
       Calendar
     </div>
+    <div class="nav-item" data-page="timetable" onclick="go('timetable')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="2" width="14" height="12" rx="1.5"/>
+        <path d="M1 6h14M6 6v8M11 6v8" stroke-linecap="round"/>
+      </svg>
+      Timetable
+    </div>
     <div class="nav-item" data-page="notes" onclick="go('notes')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
         <path d="M2 2h9l3 3v9a1 1 0 01-1 1H2a1 1 0 01-1-1V3a1 1 0 011-1z"/>
@@ -1251,6 +1490,22 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
         <rect x="1" y="1" width="14" height="14" rx="2"/>
       </svg>
       Grades
+    </div>
+    <div class="nav-item" data-page="revision" onclick="go('revision')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1.5" y="4.5" width="10" height="10" rx="1.5"/>
+        <path d="M4.5 4.5V3a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0114.5 3v7a1.5 1.5 0 01-1.5 1.5h-1.5" stroke-linecap="round"/>
+        <path d="M4 9.5l2 2 3-3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Revision
+      <span class="nav-badge" id="nav-rev-count" style="display:none"></span>
+    </div>
+    <div class="nav-item" onclick="window.open('/worldcup-schedule','_blank')" title="World Cup 2026 schedule">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="8" cy="8" r="7"/>
+        <path d="M8 3l3 2.2-1.1 3.5h-3.8L5 5.2 8 3z" stroke-linejoin="round"/>
+      </svg>
+      World Cup
     </div>
     <div class="nav-item" data-page="settings" onclick="go('settings')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -1309,7 +1564,9 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
       </div>
       <div id="tip-dashboard"></div>
       <div id="dash-quote"></div>
+      <div id="dash-today"></div>
       <div id="dash-urgent"></div>
+      <div id="dash-radar"></div>
       <div class="stats-row" id="dash-stats"></div>
       <div class="progress-row" id="dash-progress"></div>
       <div id="due-today-section"></div>
@@ -1453,6 +1710,37 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
     <div class="page-body" id="grades-body"></div>
   </div>
 
+  <!-- ── REVISION (flashcards + spaced repetition) ─────────────── -->
+  <div id="page-revision" class="page">
+    <div class="page-hd">
+      <div><div class="page-title">Revision</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openCardModal()">+ Add Card</button>
+        <button class="btn btn-primary" id="rev-start-btn" onclick="startReview()">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2l9 5-9 5V2z"/></svg>
+          Review Due Cards
+        </button>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="rev-stats" id="rev-stats"></div>
+      <div class="filter-bar" style="margin-bottom:14px" id="rev-subj-filter"></div>
+      <div id="rev-deck-list"></div>
+    </div>
+  </div>
+
+  <!-- ── TIMETABLE ────────────────────────────────────────────── -->
+  <div id="page-timetable" class="page">
+    <div class="page-hd">
+      <div><div class="page-title">Timetable</div></div>
+      <button class="btn btn-primary" onclick="openLessonModal()">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 1v12M1 7h12"/></svg>
+        Add Lesson
+      </button>
+    </div>
+    <div class="page-body" id="timetable-body"></div>
+  </div>
+
   <!-- ── SETTINGS ─────────────────────────────────────────────── -->
   <div id="page-settings" class="page">
     <div class="page-hd">
@@ -1534,6 +1822,20 @@ html.light .file-del { background: rgba(0,0,0,.05); color: var(--text-muted); bo
 </nav>
 
 <!-- ═══════════════════════════ MODAL ══════════════════════════════ -->
+<!-- ═══════════════════ REVIEW MODE (flashcards) ══════════════════ -->
+<div id="rev-overlay">
+  <div class="rev-hd">
+    <div>
+      <div class="rev-hd-title" id="rev-hd-title">Review</div>
+      <div class="rev-hd-sub" id="rev-hd-sub"></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="endReview()">Esc · Exit</button>
+  </div>
+  <div class="rev-progress-track"><div class="rev-progress-fill" id="rev-progress"></div></div>
+  <div class="rev-stage" id="rev-stage"></div>
+  <div class="rev-controls" id="rev-controls"></div>
+</div>
+
 <div class="overlay" id="overlay" onclick="overlayClick(event)">
   <div class="modal">
     <div class="modal-hd">
@@ -1632,21 +1934,75 @@ let selectedCalDay= null;
 let openFolders   = new Set();
 let pom = { running:false, secs:25*60, total:25*60, isBreak:false, taskId:null, taskTitle:'', iv:null };
 
+/* ─── SERVER SYNC ────────────────────────────────────────────────── */
+// Where the Jarvis server lives. If this page is itself served by Jarvis
+// (localhost:3000 or a LAN IP like 192.168.x.x:3000) use that same origin;
+// otherwise (file:// or GitHub Pages) try the local Jarvis server.
+const SERVER_URL = (function () {
+  const { protocol, port } = location;
+  if (/^https?:$/.test(protocol) && port === '3000') return location.origin;
+  return 'http://localhost:3000';
+})();
+
+let serverSaveTimer = null;
+
+// Update the small dot in the sidebar: green "synced" / gray "local only".
+function setSyncStatus(ok) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  el.classList.toggle('synced', ok);
+  el.classList.toggle('local', !ok);
+  const t = el.querySelector('.sync-text');
+  if (t) t.textContent = ok ? 'synced' : 'local only';
+}
+
+// Send the full state to the server. Silent on failure (localStorage still has it).
+function pushToServer() {
+  fetch(SERVER_URL + '/data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(S),
+  })
+    .then(r => setSyncStatus(r.ok))
+    .catch(() => setSyncStatus(false));
+}
+
+// Pull from the server during load(). Overrides localStorage when the server
+// has content; migrates localStorage → server the first time the server is empty.
+async function loadFromServer(hadLocal) {
+  try {
+    const r = await fetch(SERVER_URL + '/data', {
+      signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined,
+    });
+    if (!r.ok) throw new Error('bad status');
+    const data = await r.json();
+    const hasContent = data && typeof data === 'object' && Object.keys(data).length > 0;
+    if (hasContent) {
+      S = data;
+      normalizeState();
+      try { localStorage.setItem('sh_v4', JSON.stringify(S)); } catch(_) {} // cache
+    } else if (hadLocal) {
+      pushToServer(); // server empty but we have local data → first-time migration
+    }
+    setSyncStatus(true);
+  } catch (_) {
+    setSyncStatus(false); // unreachable → local only, app works exactly as before
+  }
+}
+
 /* ─── PERSISTENCE ────────────────────────────────────────────────── */
 function save() {
   try { localStorage.setItem('sh_v4', JSON.stringify(S)); } catch(_) {}
+  // Also push to server, debounced so rapid edits send at most once per 2s.
+  clearTimeout(serverSaveTimer);
+  serverSaveTimer = setTimeout(pushToServer, 2000);
 }
 
-function load() {
-  // Migrate from v2
-  const old2 = localStorage.getItem('sh_v2');
-  if (old2) { try { const d=JSON.parse(old2); S={homework:d.homework||[],exams:d.exams||[],files:d.files||[],notes:[]}; } catch(_){} }
-  // Migrate from v3
-  const old3 = localStorage.getItem('sh_v3');
-  if (old3) { try { const d=JSON.parse(old3); S=d; if(!S.notes)S.notes=[]; if(!S.files)S.files=[]; } catch(_){} }
-  // Load v4
-  const cur = localStorage.getItem('sh_v4');
-  if (cur) { try { S=JSON.parse(cur); if(!S.notes)S.notes=[]; if(!S.files)S.files=[]; } catch(_){} }
+// Apply defaults + field migrations to S. Safe to run on either localStorage
+// data or data pulled from the server (idempotent).
+function normalizeState() {
+  if (!S.notes)                S.notes          = [];
+  if (!S.files)                S.files          = [];
   if (!S.folders)              S.folders        = [];
   if (!S.events)               S.events         = [];
   if (!S.grades)               S.grades         = [];
@@ -1661,7 +2017,23 @@ function load() {
   if (!S.ib.cas) S.ib.cas = [];
   if (!S.ib.tok) S.ib.tok = [];
   if (!S.ib.ee)  S.ib.ee  = {subject:'',title:'',outline:'',supervisor:'',words:0};
+  if (!S.homework) S.homework = [];
+  if (!S.exams)    S.exams    = [];
+  if (!S.timetable) S.timetable = [];
+  if (!S.flashcards)   S.flashcards   = [];   // spaced-repetition cards
+  if (!S.quizAttempts) S.quizAttempts = [];   // quiz history (Phase 2)
   rebuildSubjects();
+
+  // Flashcard field defaults (safe for cards created externally/by Jarvis)
+  S.flashcards.forEach(c => {
+    if (typeof c.ease     !== 'number') c.ease     = 2.5;
+    if (typeof c.interval !== 'number') c.interval = 0;
+    if (typeof c.reps     !== 'number') c.reps     = 0;
+    if (typeof c.lapses   !== 'number') c.lapses   = 0;
+    if (!c.deck)      c.deck      = 'General';
+    if (!c.dueDate)   c.dueDate   = todayStr();
+    if (!c.createdAt) c.createdAt = Date.now();
+  });
 
   // Field migrations
   S.homework.forEach(h => {
@@ -1685,6 +2057,25 @@ function load() {
       n.content = n.content.split('\n').map(l => `<p>${esc(l)||'<br>'}</p>`).join('');
     }
   });
+}
+
+async function load() {
+  const hadLocal = !!(localStorage.getItem('sh_v4') || localStorage.getItem('sh_v3') || localStorage.getItem('sh_v2'));
+
+  // Migrate from v2
+  const old2 = localStorage.getItem('sh_v2');
+  if (old2) { try { const d=JSON.parse(old2); S={homework:d.homework||[],exams:d.exams||[],files:d.files||[],notes:[]}; } catch(_){} }
+  // Migrate from v3
+  const old3 = localStorage.getItem('sh_v3');
+  if (old3) { try { const d=JSON.parse(old3); S=d; if(!S.notes)S.notes=[]; if(!S.files)S.files=[]; } catch(_){} }
+  // Load v4
+  const cur = localStorage.getItem('sh_v4');
+  if (cur) { try { S=JSON.parse(cur); if(!S.notes)S.notes=[]; if(!S.files)S.files=[]; } catch(_){} }
+  normalizeState();
+
+  // Pull from the Jarvis server — overrides localStorage if it has content,
+  // or migrates localStorage → server the first time. Falls back silently.
+  await loadFromServer(hadLocal);
 
   // Show landing/setup on first ever load (no setup key = brand new user)
   if (!localStorage.getItem('sh_setup')) {
@@ -2196,8 +2587,10 @@ function render(page) {
   if (page==='homework')  renderHw();
   if (page==='exams')     renderExamsPage();
   if (page==='calendar')  renderCal();
+  if (page==='timetable') renderTimetable();
   if (page==='notes')     renderNotes();
   if (page==='grades')    renderGrades();
+  if (page==='revision')  renderRevision();
   if (page==='settings')  renderSettings();
   if (page==='ib-ia')     renderIbIa();
   if (page==='ib-cas')    renderIbCas();
@@ -2520,6 +2913,255 @@ function importData(e) {
   e.target.value = '';
 }
 
+/* ─── WORKLOAD RADAR ─────────────────────────────────────────────── */
+// Per-day load score = exams×3 + homework due×1, over the next 21 days.
+function radarDay(ds) {
+  const exams = S.exams.filter(e => e.date === ds);
+  const hw    = S.homework.filter(h => !h.done && !h.archived && h.dueDate === ds);
+  return { exams, hw, score: exams.length * 3 + hw.length };
+}
+
+function renderRadar() {
+  const el = document.getElementById('dash-radar');
+  if (!el) return;
+  const td = todayStr();
+
+  // Build 21 day-cells from today.
+  const cells = [];
+  for (let i = 0; i < 21; i++) {
+    const ds = dateStrOffset(i);
+    cells.push({ ds, ...radarDay(ds) });
+  }
+
+  // Week warning: heaviest full 7-day window (exams+tasks) over the 3 weeks.
+  let worst = null;
+  for (let start = 0; start <= cells.length - 7; start++) {
+    let ex = 0, tk = 0;
+    for (let j = start; j < start + 7; j++) { ex += cells[j].exams.length; tk += cells[j].hw.length; }
+    if (ex + tk >= 3 && (!worst || ex + tk > worst.total)) {
+      worst = { startDs: cells[start].ds, ex, tk, total: ex + tk };
+    }
+  }
+  const warnHtml = worst
+    ? `<div class="radar-warn heavy">⚠ Week of ${fmtDate(worst.startDs)} looks heavy — ${worst.ex} exam${worst.ex === 1 ? '' : 's'}, ${worst.tk} task${worst.tk === 1 ? '' : 's'} due</div>`
+    : `<div class="radar-warn">Next 3 weeks look manageable</div>`;
+
+  // Heat strip, grouped into 3 weeks of 7 with separators.
+  let strip = '';
+  for (let w = 0; w < 3; w++) {
+    strip += '<div class="radar-week">';
+    for (let d = 0; d < 7; d++) {
+      const c = cells[w * 7 + d];
+      const tier = c.score === 0 ? 't0' : c.score <= 2 ? 't1' : c.score <= 4 ? 't2' : 't3';
+      const dayNum = String(Number(c.ds.split('-')[2]));
+      const isToday = c.ds === td;
+      strip += `<div class="radar-cell ${tier}${isToday ? ' is-today' : ''}" data-ds="${c.ds}"` +
+        ` onmouseenter="radarTipShow(event,'${c.ds}')" onmouseleave="radarTipHide()"` +
+        ` onclick="radarCellClick(event,'${c.ds}')"><span class="radar-day">${dayNum}</span></div>`;
+    }
+    strip += '</div>';
+  }
+
+  el.innerHTML = `<div class="radar-wrap">${warnHtml}<div class="radar-strip">${strip}</div></div>`;
+
+  // One shared floating tooltip, lazily attached to body.
+  if (!document.getElementById('radar-tip')) {
+    const tip = document.createElement('div');
+    tip.id = 'radar-tip';
+    tip.className = 'radar-tip';
+    document.body.appendChild(tip);
+  }
+}
+
+function radarTipBuild(ds) {
+  const { exams, hw } = radarDay(ds);
+  if (!exams.length && !hw.length)
+    return `<div class="rt-date">${fmtDate(ds)}</div><div class="rt-empty">Nothing due</div>`;
+  let rows = '';
+  exams.forEach(e => { const s = subj(e.subjectId);
+    rows += `<div class="rt-row"><span class="rt-dot" style="background:${s?.color || '#888'}"></span><span class="rt-badge">Exam</span>${esc(examTitle(e))}</div>`; });
+  hw.forEach(h => { const s = subj(h.subjectId);
+    rows += `<div class="rt-row"><span class="rt-dot" style="background:${s?.color || '#888'}"></span>${esc(h.title)}</div>`; });
+  return `<div class="rt-date">${fmtDate(ds)}</div>${rows}`;
+}
+
+function radarTipShow(ev, ds) {
+  const tip = document.getElementById('radar-tip');
+  if (!tip) return;
+  tip.innerHTML = radarTipBuild(ds);
+  tip.classList.add('show');
+  const r = ev.currentTarget.getBoundingClientRect();
+  const tr = tip.getBoundingClientRect();
+  let left = r.left + r.width / 2 - tr.width / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+  let top = r.top - tr.height - 8;
+  if (top < 8) top = r.bottom + 8;
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+}
+
+function radarTipHide() {
+  const t = document.getElementById('radar-tip');
+  if (t) t.classList.remove('show');
+}
+
+// Desktop: hover shows tip, click opens calendar. Touch: first tap shows tip, second opens.
+let radarTappedDs = null;
+function radarCellClick(ev, ds) {
+  const noHover = window.matchMedia && window.matchMedia('(hover: none)').matches;
+  if (noHover && radarTappedDs !== ds) {
+    radarTappedDs = ds;
+    radarTipShow(ev, ds);
+    return;
+  }
+  radarTappedDs = null;
+  radarTipHide();
+  openCalDay(ds);
+}
+
+function openCalDay(ds) {
+  const [y, m] = ds.split('-').map(Number);
+  calDate = new Date(y, m - 1, 1);
+  selectedCalDay = ds;
+  go('calendar');
+}
+
+/* ─── TIMETABLE ──────────────────────────────────────────────────── */
+const TT_DAYS = ['Mon','Tue','Wed','Thu','Fri'];   // index 0..4 → day 1..5 (Mon..Fri)
+
+// Minutes since midnight for a "HH:MM" string (-1 if blank/invalid).
+function ttMins(t) {
+  if (!t || !/^\d{1,2}:\d{2}$/.test(t)) return -1;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+// today's Mon-Fri index (0..4), or -1 on weekends.
+function ttTodayIdx() {
+  const d = new Date().getDay();      // 0=Sun..6=Sat
+  return (d >= 1 && d <= 5) ? d - 1 : -1;
+}
+function ttLessonsForDay(idx) {
+  return S.timetable
+    .filter(l => l.day === idx + 1)
+    .sort((a, b) => ttMins(a.start) - ttMins(b.start));
+}
+
+function renderTimetable() {
+  const el = document.getElementById('timetable-body');
+  if (!el) return;
+  const todayIdx = ttTodayIdx();
+
+  el.innerHTML = '<div class="tt-grid">' + TT_DAYS.map((name, idx) => {
+    const lessons = ttLessonsForDay(idx);
+    const blocks = lessons.length
+      ? `<div class="tt-lessons">${lessons.map(l => {
+          const s = subj(l.subjectId);
+          const meta = [l.room, l.teacher].filter(Boolean).join(' · ');
+          return `<div class="tt-lesson" style="--c:${s?.color || '#888'}" onclick="openLessonModal('${l.id}')">
+            <div class="tt-l-subj">${esc(s?.name || 'Lesson')}</div>
+            <div class="tt-l-time">${esc(l.start || '')}${l.end ? '–' + esc(l.end) : ''}</div>
+            ${meta ? `<div class="tt-l-meta">${esc(meta)}</div>` : ''}
+          </div>`;
+        }).join('')}</div>`
+      : '<div class="tt-col-empty">No lessons</div>';
+    return `<div class="tt-col">
+      <div class="tt-col-hd${idx === todayIdx ? ' is-today' : ''}">
+        <span>${name}</span>
+        <button class="tt-add" title="Add lesson" onclick="openLessonModal(null,${idx + 1})">+</button>
+      </div>
+      ${blocks}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// Dashboard "Today" strip: today's lessons with current/next highlighted.
+function renderTodayStrip() {
+  const el = document.getElementById('dash-today');
+  if (!el) return;
+  const todayIdx = ttTodayIdx();
+  const lessons = todayIdx === -1 ? [] : ttLessonsForDay(todayIdx);
+
+  if (!lessons.length) {
+    el.innerHTML = `<div class="today-strip"><div class="today-strip-hd">Today</div>
+      <div class="today-strip-empty">No lessons today</div></div>`;
+    return;
+  }
+
+  const nowMin = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
+  // Active = lesson happening now; else the next upcoming lesson today.
+  let activeId = null;
+  const current = lessons.find(l => ttMins(l.start) <= nowMin && nowMin < ttMins(l.end));
+  if (current) activeId = current.id;
+  else { const next = lessons.find(l => ttMins(l.start) > nowMin); if (next) activeId = next.id; }
+
+  const pills = lessons.map(l => {
+    const s = subj(l.subjectId);
+    return `<div class="today-pill${l.id === activeId ? ' active' : ''}" style="--c:${s?.color || '#888'}" onclick="go('timetable')">
+      <span class="today-pill-time">${esc(l.start || '')}${l.end ? '–' + esc(l.end) : ''}</span>
+      <span class="today-pill-subj">${esc(s?.name || 'Lesson')}</span>
+      ${l.room ? `<span class="today-pill-room">${esc(l.room)}</span>` : ''}
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="today-strip"><div class="today-strip-hd">Today</div>
+    <div class="today-strip-row">${pills}</div></div>`;
+}
+
+// id = lesson id to edit, or null to add. presetDay = 1..5 to pre-select day.
+function openLessonModal(id, presetDay) {
+  const editing = id ? S.timetable.find(l => l.id === id) : null;
+  const opts = SUBJECTS.map(s =>
+    `<option value="${s.id}"${editing && editing.subjectId === s.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  const dayVal = editing ? editing.day : (presetDay || 1);
+  const dayOpts = TT_DAYS.map((n, i) =>
+    `<option value="${i + 1}"${dayVal === i + 1 ? ' selected' : ''}>${n}</option>`).join('');
+
+  openModal(editing ? 'Edit Lesson' : 'Add Lesson', `
+    <div class="fg"><label class="fl">Subject</label><select class="fs" id="l-subj">${opts}</select></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Day</label><select class="fs" id="l-day">${dayOpts}</select></div>
+      <div class="fg"><label class="fl">Room</label><input class="fi" id="l-room" type="text" placeholder="e.g. 204" value="${editing ? esc(editing.room || '') : ''}"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Start</label><input class="fi" id="l-start" type="time" value="${editing ? esc(editing.start || '') : ''}"></div>
+      <div class="fg"><label class="fl">End</label><input class="fi" id="l-end" type="time" value="${editing ? esc(editing.end || '') : ''}"></div>
+    </div>
+    <div class="fg"><label class="fl">Teacher (optional)</label><input class="fi" id="l-teacher" type="text" placeholder="e.g. Mr Smith" value="${editing ? esc(editing.teacher || '') : ''}"></div>
+    <div class="f-actions">
+      ${editing ? `<button class="btn btn-ghost" style="margin-right:auto;color:#f3938c" onclick="deleteLesson('${editing.id}')">Delete</button>` : ''}
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitLesson(${editing ? `'${editing.id}'` : 'null'})">${editing ? 'Save' : 'Add Lesson'}</button>
+    </div>`);
+}
+
+function submitLesson(id) {
+  const subjectId = document.getElementById('l-subj').value;
+  const day       = Number(document.getElementById('l-day').value);
+  const start     = document.getElementById('l-start').value;
+  const end       = document.getElementById('l-end').value;
+  const room      = document.getElementById('l-room').value.trim();
+  const teacher   = document.getElementById('l-teacher').value.trim();
+  if (!start) { alert('Please set a start time.'); return; }
+  if (end && ttMins(end) <= ttMins(start)) { alert('End time must be after start time.'); return; }
+
+  if (id) {
+    const l = S.timetable.find(x => x.id === id);
+    if (l) Object.assign(l, { subjectId, day, start, end, room, teacher });
+  } else {
+    S.timetable.push({ id: uid(), subjectId, day, start, end, room, teacher, createdAt: Date.now() });
+  }
+  save(); closeModal();
+  renderTimetable();
+  if (activePage === 'dashboard') renderTodayStrip();
+}
+
+function deleteLesson(id) {
+  if (!confirm('Delete this lesson?')) return;
+  S.timetable = S.timetable.filter(l => l.id !== id);
+  save(); closeModal();
+  renderTimetable();
+  if (activePage === 'dashboard') renderTodayStrip();
+}
+
 /* ─── DASHBOARD ──────────────────────────────────────────────────── */
 function renderDash() {
   const now = new Date();
@@ -2533,6 +3175,9 @@ function renderDash() {
   const q = QUOTES[qIdx];
   document.getElementById('dash-quote').innerHTML =
     `<div class="quote-card"><div class="quote-text">"${esc(q.q)}"</div><div class="quote-author">— ${esc(q.a)}</div></div>`;
+
+  renderRadar();
+  renderTodayStrip();
 
   const td = todayStr();
   const pending = S.homework.filter(h=>!h.done&&!h.archived).length;
@@ -4347,8 +4992,304 @@ async function fetchJarvisBridge() {
   } catch { /* server not running */ }
 }
 
-function init() {
-  load();
+/* ═══════════════ REVISION — FLASHCARDS + SM-2 ═══════════════════
+   Cards live in S.flashcards: {id, subjectId, front, back, deck,
+   ease, interval, dueDate, reps, lapses, createdAt, lastReviewed}.
+   Scheduling is classic SM-2 with the Anki-style 4-button mapping. */
+let revSubjF = 'all';
+let revQueue = [], revPos = 0, revFlipped = false, revSummary = false;
+let revCounts = null;
+
+function cardsDue(subjId) {
+  const td = todayStr();
+  return (S.flashcards || []).filter(c => c.dueDate <= td && (!subjId || c.subjectId === subjId));
+}
+
+// SM-2 core. rating: 0=Again 1=Hard 2=Good 3=Easy (≈ SM-2 quality 2/3/4/5).
+// Pure: returns updated scheduling fields, does not mutate the card —
+// so it doubles as the interval preview on the rating buttons.
+function sm2Apply(c, rating) {
+  let { ease, interval, reps, lapses } = c;
+  const q = rating + 2;
+  if (rating === 0) {                      // forgot — relearn from scratch
+    lapses += 1; reps = 0; interval = 1;
+  } else {
+    reps += 1;
+    if      (reps === 1) interval = (rating === 3 ? 2 : 1);
+    else if (reps === 2) interval = (rating === 3 ? 8 : 6);
+    else {
+      const mult = (rating === 1) ? 1.2 : ease * (rating === 3 ? 1.3 : 1);
+      interval = Math.max(interval + 1, Math.round(interval * mult));
+    }
+  }
+  // EF' = EF + (0.1 − (5−q)·(0.08 + (5−q)·0.02)), floored at 1.3
+  ease = Math.max(1.3, ease + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+  return { ease: Math.round(ease * 100) / 100, interval: Math.min(interval, 365), reps, lapses };
+}
+function dueDateAfter(days) {
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function updateRevBadge() {
+  const n = cardsDue().length;
+  const b = document.getElementById('nav-rev-count');
+  if (b) { b.textContent = n; b.style.display = n ? '' : 'none'; }
+}
+
+/* ── Revision page ── */
+function renderRevision() {
+  updateRevBadge();
+  const all = S.flashcards || [];
+  const td  = todayStr();
+  const due = all.filter(c => c.dueDate <= td);
+  const reviewedToday = all.filter(c =>
+    c.lastReviewed && new Date(c.lastReviewed).toDateString() === new Date().toDateString()).length;
+  const mastered = all.filter(c => c.interval >= 21).length;
+
+  document.getElementById('rev-stats').innerHTML = `
+    <div class="rev-stat due"><div class="rs-num">${due.length}</div><div class="rs-lbl">Due today</div></div>
+    <div class="rev-stat"><div class="rs-num">${all.length}</div><div class="rs-lbl">Total cards</div></div>
+    <div class="rev-stat"><div class="rs-num">${reviewedToday}</div><div class="rs-lbl">Reviewed today</div></div>
+    <div class="rev-stat"><div class="rs-num">${mastered}</div><div class="rs-lbl">Mastered (21d+)</div></div>`;
+
+  // Subject filter chips (only subjects that have cards)
+  const counts = {};
+  all.forEach(c => counts[c.subjectId] = (counts[c.subjectId] || 0) + 1);
+  const chips = [
+    `<button class="btn btn-sm ${revSubjF==='all'?'btn-primary':'btn-ghost'}" onclick="revSubjF='all';renderRevision()">All (${all.length})</button>`,
+    ...SUBJECTS.filter(s => counts[s.id]).map(s =>
+      `<button class="btn btn-sm ${revSubjF===s.id?'btn-primary':'btn-ghost'}" onclick="revSubjF='${s.id}';renderRevision()">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:5px"></span>${s.name} (${counts[s.id]})</button>`)
+  ];
+  document.getElementById('rev-subj-filter').innerHTML = chips.join('');
+
+  // Deck list grouped by subject
+  const visible = all.filter(c => revSubjF === 'all' || c.subjectId === revSubjF);
+  let html;
+  if (!all.length) {
+    html = `<div class="card"><div style="padding:36px;text-align:center;color:var(--text-muted);font-size:13.5px">
+      No flashcards yet — build decks per subject and StudyHub will schedule your revision.
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="openCardModal()">+ Add your first card</button></div></div></div>`;
+  } else if (!visible.length) {
+    html = `<div class="card"><div style="padding:28px;text-align:center;color:var(--text-muted);font-size:13.5px">No cards in this subject yet.</div></div>`;
+  } else {
+    const groups = {};
+    visible.forEach(c => (groups[c.subjectId] = groups[c.subjectId] || []).push(c));
+    const order = SUBJECTS.map(s => s.id).filter(id => groups[id])
+      .concat(Object.keys(groups).filter(id => !SUBJECTS.find(s => s.id === id)));
+    html = order.map(sid => {
+      const s  = subj(sid);
+      const cs = groups[sid].slice().sort((a, b) => a.dueDate < b.dueDate ? -1 : 1);
+      const dueN = cs.filter(c => c.dueDate <= td).length;
+      return `<div class="card" style="margin-bottom:14px">
+        <div class="card-hd">
+          <span class="card-title" style="display:flex;align-items:center;gap:8px">
+            <span style="width:9px;height:9px;border-radius:50%;background:${s ? s.color : '#888'};display:inline-block"></span>
+            ${s ? esc(s.name) : 'Other'}
+            <span style="color:var(--text-muted);font-weight:500;font-size:12px">· ${cs.length} card${cs.length===1?'':'s'}${dueN ? ` · ${dueN} due` : ''}</span>
+          </span>
+          <div style="display:flex;gap:6px">
+            ${dueN ? `<button class="btn btn-primary btn-sm" onclick="startReview('${sid}')">Review ${dueN}</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="revSubjF='${sid}';openCardModal()">+ Add</button>
+          </div>
+        </div>
+        ${cs.map(c => revRowHtml(c, td)).join('')}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('rev-deck-list').innerHTML = html;
+
+  const sb = document.getElementById('rev-start-btn');
+  if (sb) { sb.style.opacity = due.length ? '' : '.45'; sb.style.pointerEvents = due.length ? '' : 'none'; }
+}
+
+function revRowHtml(c, td) {
+  const isDue = c.dueDate <= td;
+  const days  = Math.max(0, Math.round((new Date(c.dueDate+'T00:00:00') - new Date(td+'T00:00:00')) / 86400000));
+  const badge = isDue
+    ? `<span class="rev-due-badge due">Due</span>`
+    : `<span class="rev-due-badge later">${days}d</span>`;
+  return `<div class="rev-deck-row" onclick="openCardModal('${c.id}')">
+    <div class="rev-card-front">${esc(c.front)}</div>
+    <div class="rev-card-back-prev">${esc(c.back)}</div>
+    ${c.deck && c.deck !== 'General' ? `<span class="rev-deck-tag">${esc(c.deck)}</span>` : ''}
+    ${badge}
+    <button class="rev-row-btn" title="Delete card" onclick="event.stopPropagation();deleteCard('${c.id}')">✕</button>
+  </div>`;
+}
+
+/* ── Add / edit card modal ── */
+function openCardModal(cardId) {
+  const c = cardId ? S.flashcards.find(x => x.id === cardId) : null;
+  const selSubj = c ? c.subjectId : (revSubjF !== 'all' ? revSubjF : SUBJECTS[0]?.id);
+  const opts = SUBJECTS.map(s => `<option value="${s.id}" ${s.id===selSubj?'selected':''}>${s.name}</option>`).join('');
+  const decks = [...new Set(S.flashcards.map(x => x.deck).filter(d => d && d !== 'General'))];
+  openModal(c ? 'Edit Card' : 'Add Flashcard', `
+    <div class="fg"><label class="fl">Subject</label><select class="fs" id="fc-subj">${opts}</select></div>
+    <div class="fg"><label class="fl">Front (question)</label><textarea class="fta" id="fc-front" rows="3" placeholder="e.g. What is Le Chatelier's principle?">${c ? esc(c.front) : ''}</textarea></div>
+    <div class="fg"><label class="fl">Back (answer)</label><textarea class="fta" id="fc-back" rows="3" placeholder="The answer…">${c ? esc(c.back) : ''}</textarea></div>
+    <div class="fg"><label class="fl">Deck (optional)</label>
+      <input class="fi" id="fc-deck" list="fc-deck-list" placeholder="General" value="${c && c.deck !== 'General' ? esc(c.deck) : ''}">
+      <datalist id="fc-deck-list">${decks.map(d => `<option value="${esc(d)}">`).join('')}</datalist>
+    </div>
+    <div class="modal-ft" style="margin-top:18px">
+      <div>${c ? `<button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteCard('${c.id}')">Delete</button>` : ''}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCardModal(${c ? `'${c.id}'` : 'null'})">${c ? 'Save' : 'Add Card'}</button>
+      </div>
+    </div>`);
+  setTimeout(() => document.getElementById('fc-front')?.focus(), 60);
+}
+
+function saveCardModal(cardId) {
+  const front  = document.getElementById('fc-front').value.trim();
+  const back   = document.getElementById('fc-back').value.trim();
+  const subjId = document.getElementById('fc-subj').value;
+  const deck   = document.getElementById('fc-deck').value.trim() || 'General';
+  if (!front) { document.getElementById('fc-front').focus(); return; }
+  if (!back)  { document.getElementById('fc-back').focus();  return; }
+  if (cardId) {
+    const c = S.flashcards.find(x => x.id === cardId);
+    if (c) Object.assign(c, { front, back, subjectId: subjId, deck });
+  } else {
+    S.flashcards.push({ id: uid(), subjectId: subjId, front, back, deck,
+      ease: 2.5, interval: 0, reps: 0, lapses: 0, dueDate: todayStr(), createdAt: Date.now() });
+  }
+  save(); closeModal();
+  if (activePage === 'revision') renderRevision(); else updateRevBadge();
+}
+
+function deleteCard(id) {
+  if (!confirm('Delete this flashcard?')) return;
+  S.flashcards = S.flashcards.filter(c => c.id !== id);
+  save(); closeModal();
+  if (activePage === 'revision') renderRevision(); else updateRevBadge();
+}
+
+/* ── Full-screen review session ── */
+function startReview(subjId) {
+  let pool = cardsDue(subjId || (revSubjF !== 'all' ? revSubjF : null));
+  if (!pool.length) return;
+  pool = pool.slice();
+  for (let i = pool.length - 1; i > 0; i--) {           // Fisher-Yates shuffle
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  revQueue = pool.map(c => c.id);
+  revPos = 0; revFlipped = false; revSummary = false;
+  revCounts = { reviewed: 0, again: 0 };
+  document.getElementById('rev-overlay').classList.add('open');
+  renderRevCard();
+}
+
+function renderRevCard() {
+  const card = S.flashcards.find(c => c.id === revQueue[revPos]);
+  if (revPos >= revQueue.length || !card) { showRevSummary(); return; }
+  const s = subj(card.subjectId);
+  document.getElementById('rev-hd-title').textContent = s ? s.name : 'Review';
+  document.getElementById('rev-hd-sub').textContent =
+    `${revQueue.length - revPos} card${revQueue.length - revPos === 1 ? '' : 's'} left` +
+    (card.deck && card.deck !== 'General' ? ` · ${card.deck}` : '');
+  document.getElementById('rev-progress').style.width = (revPos / revQueue.length * 100) + '%';
+  document.getElementById('rev-stage').innerHTML = `
+    <div class="rev-flip" id="rev-flip" onclick="flipRevCard()">
+      <div class="rev-flip-inner">
+        <div class="rev-face front">
+          <span class="rev-face-lbl" style="${s ? `color:${s.color}` : ''}">${s ? esc(s.name) : 'Question'}</span>
+          <div class="rev-face-txt">${esc(card.front)}</div>
+        </div>
+        <div class="rev-face back">
+          <span class="rev-face-lbl">Answer</span>
+          <div class="rev-face-txt">${esc(card.back)}</div>
+        </div>
+      </div>
+    </div>`;
+  renderRevControls(card);
+}
+
+function renderRevControls(card) {
+  const el = document.getElementById('rev-controls');
+  if (!revFlipped) {
+    el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <button class="btn btn-primary" onclick="flipRevCard()">Show Answer</button>
+      <span class="rev-flip-hint">Space to flip · Esc to exit</span></div>`;
+  } else {
+    const iv = r => { const u = sm2Apply(card, r); return u.interval + 'd'; };
+    el.innerHTML = `<div class="rev-rate-row">
+      <button class="rev-rate-btn rr-again" onclick="rateRevCard(0)"><span>Again</span><span class="rr-int">&lt;1d</span><span class="rr-key">1</span></button>
+      <button class="rev-rate-btn rr-hard"  onclick="rateRevCard(1)"><span>Hard</span><span class="rr-int">${iv(1)}</span><span class="rr-key">2</span></button>
+      <button class="rev-rate-btn rr-good"  onclick="rateRevCard(2)"><span>Good</span><span class="rr-int">${iv(2)}</span><span class="rr-key">3</span></button>
+      <button class="rev-rate-btn rr-easy"  onclick="rateRevCard(3)"><span>Easy</span><span class="rr-int">${iv(3)}</span><span class="rr-key">4</span></button>
+    </div>`;
+  }
+}
+
+function flipRevCard() {
+  if (revSummary) return;
+  revFlipped = !revFlipped;
+  document.getElementById('rev-flip')?.classList.toggle('flipped', revFlipped);
+  const card = S.flashcards.find(c => c.id === revQueue[revPos]);
+  if (card) renderRevControls(card);
+}
+
+function rateRevCard(rating) {
+  if (!revFlipped || revSummary) return;
+  const card = S.flashcards.find(c => c.id === revQueue[revPos]);
+  if (card) {
+    Object.assign(card, sm2Apply(card, rating));
+    card.dueDate = dueDateAfter(card.interval);
+    card.lastReviewed = Date.now();
+    revCounts.reviewed++;
+    if (rating === 0) { revCounts.again++; revQueue.push(card.id); }  // lapsed → see again this session
+    save();
+  }
+  revPos++; revFlipped = false;
+  renderRevCard();
+  updateRevBadge();
+}
+
+function showRevSummary() {
+  revSummary = true;
+  document.getElementById('rev-progress').style.width = '100%';
+  document.getElementById('rev-hd-title').textContent = 'Review';
+  document.getElementById('rev-hd-sub').textContent = '';
+  const stillDue = cardsDue().length;
+  document.getElementById('rev-stage').innerHTML = `
+    <div class="rev-summary">
+      <div class="rsm-big">${revCounts.again ? '💪' : '🎉'}</div>
+      <h2>Session complete</h2>
+      <p>${revCounts.reviewed} review${revCounts.reviewed===1?'':'s'} · ${revCounts.again} lapse${revCounts.again===1?'':'s'}<br>
+        ${stillDue ? `${stillDue} card${stillDue===1?'':'s'} still due today` : 'All caught up for today!'}</p>
+      <div style="display:flex;gap:8px;justify-content:center">
+        ${stillDue ? `<button class="btn btn-primary" onclick="startReview()">Keep Reviewing</button>` : ''}
+        <button class="btn btn-ghost" onclick="endReview()">Done</button>
+      </div>
+    </div>`;
+  document.getElementById('rev-controls').innerHTML = '';
+}
+
+function endReview() {
+  document.getElementById('rev-overlay').classList.remove('open');
+  revQueue = []; revPos = 0; revFlipped = false; revSummary = false;
+  if (activePage === 'revision') renderRevision(); else updateRevBadge();
+}
+
+// Review-mode keyboard: Space/Enter flips, 1-4 rates, Esc exits.
+document.addEventListener('keydown', e => {
+  const ov = document.getElementById('rev-overlay');
+  if (!ov || !ov.classList.contains('open')) return;
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+  if (e.key === 'Escape') { e.preventDefault(); endReview(); return; }
+  if (revSummary) return;
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipRevCard(); return; }
+  if (revFlipped && e.key >= '1' && e.key <= '4') { e.preventDefault(); rateRevCard(+e.key - 1); }
+});
+
+async function init() {
+  await load();
 
   // Existing users who have data but never did the new setup wizard: auto-approve them
   const hasExistingData = localStorage.getItem('sh_v2')||localStorage.getItem('sh_v3')||localStorage.getItem('sh_v4');
@@ -4358,6 +5299,7 @@ function init() {
 
   renderSidebar();
   renderDash();
+  updateRevBadge();
 
   // Show dashboard tip (it's on first nav — show here since dashboard is the entry point)
   showTipIfNeeded('dashboard');

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WORLD CUP 2026 — JARVIS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070b14; --panel:rgba(14,22,38,.72); --cyan:#00d4ff; --cyan-dim:rgba(0,212,255,.55);
+    --gold:#ffd07a; --gold-bright:#FFB840; --danger:#ff4444; --green:#1ed760;
+    --line:rgba(0,212,255,.16); --txt:#cfe9f5; --muted:rgba(160,200,220,.6);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Fira Code',monospace; background:var(--bg); color:var(--txt);
+    min-height:100vh; padding:24px 16px 60px;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(0,212,255,.07), transparent 45%),
+      radial-gradient(circle at 90% 100%, rgba(255,170,60,.05), transparent 40%);
+  }
+  /* scanlines */
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+    background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
+    opacity:.35;mix-blend-mode:overlay}
+  .wrap{max-width:920px;margin:0 auto}
+  header{text-align:center;margin-bottom:6px}
+  h1{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(22px,5vw,40px);
+    letter-spacing:4px;color:#fff;text-shadow:0 0 24px rgba(0,212,255,.55)}
+  .sub{font-size:12px;color:var(--cyan);letter-spacing:3px;margin-top:4px;text-transform:uppercase}
+  .meta{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:1px}
+  .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 22px}
+  .chip{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1.5px;padding:8px 14px;
+    border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--cyan);
+    cursor:pointer;backdrop-filter:blur(8px);transition:.15s;text-transform:uppercase}
+  .chip:hover{border-color:var(--cyan-dim);box-shadow:0 0 20px rgba(0,212,255,.18)}
+  .chip.active{background:rgba(0,212,255,.16);color:#fff;border-color:var(--cyan)}
+  .chip.gold{color:var(--gold)} .chip.gold.active{background:rgba(255,170,60,.16);border-color:var(--gold)}
+
+  .next{margin:0 auto 24px;max-width:520px;background:var(--panel);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,170,60,.3);border-top:2px solid var(--gold);border-radius:14px;
+    padding:16px 18px;box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 40px rgba(255,170,60,.1)}
+  .next .lbl{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+  .next .m{font-family:'Orbitron',monospace;font-size:20px;color:#fff;margin:6px 0 2px}
+  .next .w{font-size:12px;color:var(--muted)}
+  .next .cd{font-family:'Orbitron',monospace;font-size:13px;color:var(--gold-bright);margin-top:8px}
+
+  .day{margin:22px 0 8px;font-family:'Orbitron',monospace;font-size:13px;letter-spacing:2px;
+    color:var(--cyan);border-bottom:1px solid var(--line);padding-bottom:6px;text-transform:uppercase}
+  .match{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;
+    background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);
+    border-radius:11px;padding:11px 14px;margin-bottom:7px;transition:.15s}
+  .match:hover{border-color:var(--cyan-dim);box-shadow:0 8px 26px rgba(0,0,0,.4)}
+  .match.spain{border-top:2px solid var(--gold);border-color:rgba(255,170,60,.28);
+    box-shadow:0 0 26px rgba(255,170,60,.1)}
+  .match.live{border-top:2px solid var(--danger);box-shadow:0 0 26px rgba(255,68,68,.18)}
+  .match.done{opacity:.5}
+  .time{font-family:'Orbitron',monospace;font-size:15px;color:var(--cyan);text-align:center;line-height:1.1}
+  .match.spain .time{color:var(--gold-bright)}
+  .tiny{display:block;font-size:9px;color:var(--muted);font-family:'Fira Code';letter-spacing:1px;margin-top:2px}
+  .teams{font-size:14px;font-weight:600;color:#fff;font-family:'Orbitron',monospace;letter-spacing:.5px}
+  .teams .vs{color:var(--muted);font-weight:400;margin:0 7px;font-family:'Fira Code'}
+  .star{color:var(--gold);margin-left:6px}
+  .info{text-align:right}
+  .grp{font-size:10px;color:var(--cyan-dim);font-family:'Orbitron';letter-spacing:1px}
+  .ven{font-size:10px;color:var(--muted);margin-top:2px}
+  .livebadge{display:inline-block;font-family:'Orbitron';font-size:9px;letter-spacing:1px;
+    color:var(--danger);border:1px solid var(--danger);border-radius:6px;padding:1px 5px;margin-top:3px;animation:bl 1s infinite}
+  @keyframes bl{50%{opacity:.4}}
+  .hidden{display:none!important}
+  footer{text-align:center;margin-top:30px;font-size:10px;color:var(--muted);letter-spacing:1px}
+  a.back{color:var(--cyan);text-decoration:none;border:1px solid var(--line);padding:7px 14px;
+    border-radius:9px;font-family:'Orbitron';font-size:10px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>WORLD CUP 2026</h1>
+    <div class="sub">USA · Canada · Mexico</div>
+    <div class="meta" id="meta">All kickoff times shown in Zürich local time · Spain = Group H</div>
+  </header>
+
+  <div id="next" class="next hidden"></div>
+
+  <div id="live" class="hidden" style="margin:0 auto 24px;max-width:640px">
+    <div style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;color:var(--danger);text-align:center;margin-bottom:10px">● TODAY — LIVE SCORES</div>
+    <div id="live-rows"></div>
+  </div>
+
+  <div class="bar">
+    <div class="chip active" data-filter="all">All Games</div>
+    <div class="chip gold" data-filter="spain">🇪🇸 Spain</div>
+    <div class="chip" data-filter="group">Group Stage</div>
+    <div class="chip" data-filter="ko">Knockouts</div>
+    <div class="chip" data-filter="upcoming">Upcoming</div>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>
+    <a class="back" href="/jarvis">⟵ BACK TO JARVIS</a>
+    <div style="margin-top:14px">Data: Al Jazeera / FIFA · Times auto-shown for Zürich (CEST)</div>
+  </footer>
+</div>
+
+<script>
+let MATCHES=[], FILTER='all';
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function ts(m){ return new Date(m.utc).getTime(); }
+function fmtDay(dateStr){
+  const d=new Date(dateStr+'T12:00:00');
+  return DOW[d.getDay()]+', '+d.getDate()+' '+MON[d.getMonth()];
+}
+function isKO(m){ return m.group===null; }
+
+function render(){
+  const now=Date.now();
+  const list=document.getElementById('list');
+  list.innerHTML='';
+  let shown=MATCHES.filter(m=>{
+    if(FILTER==='spain') return m.spain;
+    if(FILTER==='group') return !isKO(m);
+    if(FILTER==='ko') return isKO(m);
+    if(FILTER==='upcoming') return ts(m)+2*3600*1000 > now;
+    return true;
+  });
+  let curDay='';
+  shown.forEach(m=>{
+    if(m.date!==curDay){
+      curDay=m.date;
+      const h=document.createElement('div');
+      h.className='day'; h.textContent=fmtDay(m.date);
+      list.appendChild(h);
+    }
+    const start=ts(m), end=start+2*3600*1000;
+    const live = now>=start && now<=end;
+    const done = now>end;
+    const row=document.createElement('div');
+    row.className='match'+(m.spain?' spain':'')+(live?' live':'')+(done&&!live?' done':'');
+    const teams = isKO(m) ? m.stage : (m.home+'<span class="vs">vs</span>'+m.away+(m.spain?'<span class="star">★</span>':''));
+    row.innerHTML=
+      '<div class="time">'+m.time+'<span class="tiny">'+(live?'LIVE':done?'FT':'KO')+'</span></div>'+
+      '<div class="teams">'+teams+'</div>'+
+      '<div class="info"><div class="grp">'+(isKO(m)?'KO':'GRP '+m.group)+'</div>'+
+        '<div class="ven">'+m.venue+'</div>'+
+        (live?'<div class="livebadge">● LIVE</div>':'')+'</div>';
+    list.appendChild(row);
+  });
+  if(!shown.length) list.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px">No matches in this view.</div>';
+}
+
+function renderNext(){
+  const now=Date.now();
+  const upcoming=MATCHES.filter(m=>ts(m)+2*3600*1000>now).sort((a,b)=>ts(a)-ts(b));
+  const box=document.getElementById('next');
+  // Prefer next Spain game; fall back to next overall
+  const spainNext=upcoming.find(m=>m.spain);
+  const m=spainNext||upcoming[0];
+  if(!m){box.classList.add('hidden');return;}
+  const start=ts(m);
+  const diff=start-now;
+  let cd;
+  if(diff<=0 && now<start+2*3600*1000) cd='● LIVE NOW';
+  else{
+    const h=Math.floor(diff/3600000), d=Math.floor(h/24);
+    cd = d>0 ? ('in '+d+'d '+(h%24)+'h') : ('in '+h+'h '+Math.floor((diff%3600000)/60000)+'m');
+  }
+  box.classList.remove('hidden');
+  box.innerHTML='<div class="lbl">'+(m.spain?'🇪🇸 Next Spain match':'Next match')+'</div>'+
+    '<div class="m">'+(isKO(m)?m.stage:m.home+' vs '+m.away)+'</div>'+
+    '<div class="w">'+fmtDay(m.date)+' · '+m.time+' Zürich · '+m.venue+'</div>'+
+    '<div class="cd">'+cd+'</div>';
+}
+
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active'); FILTER=c.dataset.filter; render();
+}));
+
+// Live scores from the server's football-data.org feed (server-side key, 5-min cache)
+function renderLive(){
+  fetch('/worldcup').then(r=>r.ok?r.json():Promise.reject()).then(live=>{
+    const box=document.getElementById('live'), rows=document.getElementById('live-rows');
+    const today=(live.today||[]).filter(m=>m.scoreHome!=null||['IN_PLAY','PAUSED','LIVE','FINISHED'].includes(m.status));
+    if(!today.length){ box.classList.add('hidden'); return; }
+    box.classList.remove('hidden'); rows.innerHTML='';
+    today.forEach(m=>{
+      const inPlay=['IN_PLAY','PAUSED','LIVE'].includes(m.status);
+      const ft=m.status==='FINISHED';
+      const badge = inPlay ? `<span class="livebadge">● ${m.minute?m.minute+"'":'LIVE'}</span>` : ft ? `<span class="grp">FT</span>` : `<span class="grp">${m.kickoff||''}</span>`;
+      const sc = (m.scoreHome!=null) ? `${m.scoreHome} – ${m.scoreAway}` : 'vs';
+      const row=document.createElement('div');
+      row.className='match'+(m.isSpain?' spain':'')+(inPlay?' live':'');
+      row.innerHTML=
+        `<div class="time" style="font-size:18px">${sc}</div>`+
+        `<div class="teams">${m.home}<span class="vs"> </span>${m.away}${m.isSpain?'<span class="star">★</span>':''}</div>`+
+        `<div class="info">${badge}</div>`;
+      rows.appendChild(row);
+    });
+  }).catch(()=>{ document.getElementById('live').classList.add('hidden'); });
+}
+
+fetch('/worldcup.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{
+  MATCHES=d.matches.sort((a,b)=>ts(a)-ts(b));
+  if(d.updated) document.getElementById('meta').textContent='Zürich local time · Spain = Group H · updated '+d.updated;
+  renderNext(); render(); renderLive();
+  setInterval(()=>{renderNext();render();},60000);
+  setInterval(renderLive,60000);
+}).catch(()=>{
+  document.getElementById('list').innerHTML='<div style="text-align:center;color:var(--danger);padding:30px">Could not load worldcup.json. Make sure the Jarvis server is running.</div>';
+});
+</script>
+</body>
+</html>

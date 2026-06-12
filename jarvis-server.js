@@ -2,11 +2,21 @@
 const http       = require('http');
 const fs         = require('fs');
 const path       = require('path');
+const os         = require('os');
 const { spawn, execSync } = require('child_process');
 
 const PORT       = 3000;
-const HOST       = '127.0.0.1';
+const HOST       = '0.0.0.0'; // listen on all interfaces so an iPad on the same WiFi can connect
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+// football-data.org API key — SERVER-SIDE ONLY. Never sent to the frontend;
+// the dashboard reads the digested result from GET /worldcup instead.
+// Key is loaded from an env var or a git-ignored ./secrets.js (never committed).
+let FOOTBALL_KEY = process.env.FOOTBALL_KEY || '';
+if (!FOOTBALL_KEY) {
+  try { FOOTBALL_KEY = require('./secrets.js').FOOTBALL_KEY || ''; }
+  catch (e) { console.warn('  ⚠  No football API key found (set FOOTBALL_KEY or create secrets.js)'); }
+}
 
 // ─── FIND CLAUDE AT STARTUP ───────────────────────────────────────────────────
 let CLAUDE;
@@ -51,6 +61,183 @@ function writeBridge(data) {
   fs.writeFileSync(BRIDGE_FILE, JSON.stringify(data, null, 2));
 }
 
+// ─── STUDYHUB DATA STORE + AUTO-BACKUP ────────────────────────────────────────
+// The server is the source of truth for StudyHub data. The dashboard/app reads
+// from GET /data and saves with POST /data.
+const DATA_FILE   = path.join(__dirname, 'studyhub-data.json');
+const BACKUP_DIR  = path.join(__dirname, 'backups');
+const MAX_BACKUPS = 14;
+
+// Ensure the data file and backups folder exist at startup.
+if (!fs.existsSync(DATA_FILE))  fs.writeFileSync(DATA_FILE, '{}');
+if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR);
+
+function readData() {
+  try { return fs.readFileSync(DATA_FILE, 'utf8'); }
+  catch { return '{}'; }
+}
+
+// On the first POST /data of each day, copy the current data file to
+// backups/studyhub-YYYY-MM-DD.json before it gets overwritten.
+function backupIfNeeded() {
+  const today      = new Date().toISOString().slice(0, 10);
+  const backupPath = path.join(BACKUP_DIR, `studyhub-${today}.json`);
+  if (fs.existsSync(backupPath)) return; // already backed up today
+
+  try { fs.copyFileSync(DATA_FILE, backupPath); }
+  catch (e) { console.log(`  ⚠  backup failed: ${e.message}`); return; }
+  console.log(`  💾  backup → studyhub-${today}.json`);
+
+  // Prune to the 14 most recent backups.
+  const files = fs.readdirSync(BACKUP_DIR)
+    .filter(f => /^studyhub-\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .sort(); // ISO date names sort chronologically
+  while (files.length > MAX_BACKUPS) {
+    const old = files.shift();
+    try { fs.unlinkSync(path.join(BACKUP_DIR, old)); console.log(`  🗑  pruned old backup ${old}`); }
+    catch { /* ignore */ }
+  }
+}
+
+// First non-internal IPv4 address — what an iPad on the same WiFi would use.
+function localIp() {
+  const ifaces = os.networkInterfaces();
+  for (const name of Object.keys(ifaces)) {
+    for (const ni of ifaces[name]) {
+      if (ni.family === 'IPv4' && !ni.internal) return ni.address;
+    }
+  }
+  return null;
+}
+
+// ─── WORLD CUP (football-data.org, FIFA WC 2026) ──────────────────────────────
+const WC_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
+const WC_TTL = 5 * 60 * 1000;          // cache 5 minutes (rate-limit safety)
+let wcCache  = { ts: 0, data: null };
+
+const zurichDate = utc => new Date(utc).toLocaleDateString('en-CA', { timeZone: 'Europe/Zurich' });          // YYYY-MM-DD
+const zurichTime = utc => new Date(utc).toLocaleTimeString('en-GB', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
+const isSpain    = t => !!t && (t.tla === 'ESP' || /spain|españa/i.test(t.name || ''));
+const teamTag    = t => (t && (t.tla || t.shortName || t.name)) || '?';
+const teamName   = t => (t && (t.shortName || t.name || t.tla)) || 'TBD';
+
+function buildWorldCup(matches) {
+  const todayZ = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Zurich' });
+  const nowMs  = Date.now();
+
+  // Spain's next scheduled match (soonest in the future)
+  let spainNext = null;
+  const upcoming = matches
+    .filter(m => isSpain(m.homeTeam) || isSpain(m.awayTeam))
+    .filter(m => ['SCHEDULED', 'TIMED'].includes(m.status) && new Date(m.utcDate).getTime() >= nowMs)
+    .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+  if (upcoming.length) {
+    const m = upcoming[0];
+    const spainHome = isSpain(m.homeTeam);
+    const opp = spainHome ? m.awayTeam : m.homeTeam;
+    spainNext = {
+      opponent:    teamName(opp),
+      opponentTla: opp?.tla || '',
+      spainHome,
+      date:        zurichDate(m.utcDate),
+      kickoff:     zurichTime(m.utcDate),
+      utcDate:     m.utcDate,
+    };
+  }
+
+  // Today's matches (by Europe/Zurich date)
+  const today = matches
+    .filter(m => zurichDate(m.utcDate) === todayZ)
+    .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate))
+    .map(m => {
+      const spain = isSpain(m.homeTeam) || isSpain(m.awayTeam);
+      const opp   = spain ? (isSpain(m.homeTeam) ? m.awayTeam : m.homeTeam) : null;
+      return {
+        home:      teamTag(m.homeTeam),
+        away:      teamTag(m.awayTeam),
+        status:    m.status,
+        scoreHome: m.score?.fullTime?.home ?? m.score?.halfTime?.home ?? null,
+        scoreAway: m.score?.fullTime?.away ?? m.score?.halfTime?.away ?? null,
+        kickoff:   zurichTime(m.utcDate),
+        isSpain:   spain,
+        opponent:  opp ? teamName(opp) : null,
+        minute:    m.minute ?? null,
+      };
+    });
+
+  return { spainNext, today, updated: nowMs };
+}
+
+async function fetchWorldCup() {
+  if (wcCache.data && Date.now() - wcCache.ts < WC_TTL) return wcCache.data;
+  try {
+    const r = await fetch(WC_URL, {
+      headers: { 'X-Auth-Token': FOOTBALL_KEY },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    const data = buildWorldCup(Array.isArray(j.matches) ? j.matches : []);
+    wcCache = { ts: Date.now(), data };
+    return data;
+  } catch (e) {
+    if (wcCache.data) return wcCache.data;   // serve stale rather than nothing
+    return { spainNext: null, today: [], updated: Date.now(), error: String(e.message || e) };
+  }
+}
+
+// ─── BROWSER CONTROL & READING (Google Chrome via AppleScript) ────────────────
+// No mouse/navigation — just open URLs/windows and read what's on the page.
+function runOsa(lines) {
+  const args = lines.map(l => '-e ' + JSON.stringify(l)).join(' ');
+  return execSync(`osascript ${args}`, {
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  }).trim();
+}
+
+// Read the active tab: returns "title\nurl\n===PAGECONTENT===\n<visible text>".
+// Needs Chrome → View → Developer → "Allow JavaScript from Apple Events".
+function chromeReadActiveTab() {
+  return runOsa([
+    'tell application "Google Chrome"',
+    '  if (count of windows) is 0 then return "NO_WINDOW"',
+    '  set t to active tab of front window',
+    '  set theTitle to title of t',
+    '  set theURL to URL of t',
+    '  set theText to execute t javascript "document.body.innerText"',
+    '  return theTitle & linefeed & theURL & linefeed & "===PAGECONTENT===" & linefeed & theText',
+    'end tell',
+  ]);
+}
+
+// List every open tab across all windows as "title — url" lines.
+function chromeListTabs() {
+  return runOsa([
+    'set output to ""',
+    'tell application "Google Chrome"',
+    '  if (count of windows) is 0 then return "NO_WINDOW"',
+    '  repeat with w in windows',
+    '    repeat with t in tabs of w',
+    '      set output to output & (title of t) & " — " & (URL of t) & linefeed',
+    '    end repeat',
+    '  end repeat',
+    'end tell',
+    'return output',
+  ]);
+}
+
+// Open a URL in a brand-new Chrome window.
+function chromeOpenNewWindow(url) {
+  return runOsa([
+    'tell application "Google Chrome"',
+    '  activate',
+    '  make new window',
+    `  set URL of active tab of front window to "${url.replace(/"/g, '\\"')}"`,
+    'end tell',
+  ]);
+}
+
 // ─── SERVER ───────────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   cors(res);
@@ -58,11 +245,33 @@ const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
   // GET /jarvis — serve the dashboard (allows Chrome to remember mic permission)
-  if (req.method === 'GET' && req.url === '/jarvis') {
+  if (req.method === 'GET' && (req.url === '/jarvis' || req.url.startsWith('/jarvis?'))) {
     const filePath = path.join(__dirname, 'jarvis.html');
     fs.readFile(filePath, (err, data) => {
       if (err) { res.writeHead(404); res.end('jarvis.html not found'); return; }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    });
+    return;
+  }
+
+  // GET /worldcup-schedule — serve the full World Cup 2026 fixtures page
+  if (req.method === 'GET' && (req.url === '/worldcup-schedule' || req.url.startsWith('/worldcup-schedule?'))) {
+    const filePath = path.join(__dirname, 'worldcup.html');
+    fs.readFile(filePath, (err, data) => {
+      if (err) { res.writeHead(404); res.end('worldcup.html not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    });
+    return;
+  }
+
+  // GET /worldcup.json — serve the World Cup fixtures data
+  if (req.method === 'GET' && req.url === '/worldcup.json') {
+    const filePath = path.join(__dirname, 'worldcup.json');
+    fs.readFile(filePath, (err, data) => {
+      if (err) { res.writeHead(404); res.end('worldcup.json not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(data);
     });
     return;
@@ -82,6 +291,88 @@ const server = http.createServer((req, res) => {
   // GET /health
   if (req.method === 'GET' && req.url === '/health') {
     json(res, 200, { status: 'online', pid: process.pid, claude: CLAUDE });
+    return;
+  }
+
+  // GET /data — return the full StudyHub data store
+  if (req.method === 'GET' && req.url === '/data') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(readData());
+    return;
+  }
+
+  // POST /data — overwrite the StudyHub data store (with daily auto-backup first)
+  if (req.method === 'POST' && req.url === '/data') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      let parsed;
+      try { parsed = JSON.parse(body); }
+      catch { json(res, 400, { error: 'Invalid JSON' }); return; }
+
+      backupIfNeeded(); // copies current file before overwrite, once per day
+      try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(parsed, null, 2));
+        json(res, 200, { success: true });
+      } catch (e) {
+        json(res, 500, { error: `Could not save data: ${e.message}` });
+      }
+    });
+    return;
+  }
+
+  // GET /backups — list available backup files
+  if (req.method === 'GET' && req.url === '/backups') {
+    try {
+      const backups = fs.readdirSync(BACKUP_DIR)
+        .filter(f => /^studyhub-\d{4}-\d{2}-\d{2}\.json$/.test(f))
+        .sort()
+        .reverse() // newest first
+        .map(f => {
+          const st = fs.statSync(path.join(BACKUP_DIR, f));
+          return { file: f, date: f.slice(9, 19), size: st.size, modified: st.mtime };
+        });
+      json(res, 200, { count: backups.length, backups });
+    } catch (e) {
+      json(res, 500, { error: `Could not list backups: ${e.message}` });
+    }
+    return;
+  }
+
+  // GET /worldcup — digested FIFA WC 2026 data (key stays server-side, 5-min cache)
+  if (req.method === 'GET' && req.url === '/worldcup') {
+    fetchWorldCup()
+      .then(data => json(res, 200, data))
+      .catch(() => json(res, 200, { spainNext: null, today: [], error: 'failed' }));
+    return;
+  }
+
+  // POST /upload — save an attached file (base64) into jarvis-uploads/, return its path
+  if (req.method === 'POST' && req.url === '/upload') {
+    console.log('  📎  upload request received from', req.socket.remoteAddress);
+    const MAX_UPLOAD = 25 * 1024 * 1024; // base64 body limit (~18MB file)
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+      if (body.length > MAX_UPLOAD) { json(res, 413, { error: 'File too large (max ~18MB)' }); req.destroy(); }
+    });
+    req.on('end', () => {
+      try {
+        const parsed = JSON.parse(body);
+        const rawName = parsed.filename || parsed.name;
+        const data    = parsed.data;
+        if (!rawName || !data) { json(res, 400, { error: 'Need filename and data' }); return; }
+        const uploadsDir = path.join(__dirname, 'jarvis-uploads');
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+        const safe = String(rawName).replace(/^.*[\\/]/, '').replace(/[^\w.\- ]/g, '_').slice(0, 120) || 'file';
+        const filePath = path.join(uploadsDir, `${Date.now()}-${safe}`);
+        fs.writeFileSync(filePath, Buffer.from(data, 'base64'));
+        console.log(`  📎  upload → ${path.basename(filePath)} (${fs.statSync(filePath).size} bytes)`);
+        json(res, 200, { success: true, path: filePath });
+      } catch {
+        json(res, 400, { error: 'Invalid upload' });
+      }
+    });
     return;
   }
 
@@ -130,9 +421,28 @@ const server = http.createServer((req, res) => {
         // Games
         'steam':       ['Steam'],
         // Local URLs opened in Chrome
-        'studyhub':    ['url:file:///Users/alexander/Desktop/Studenthub/index.html'],
+        'studyhub':    ['url:http://localhost:3000'],
         'jarvis':      ['url:http://localhost:3000/jarvis'],
+        'claude':      ['Claude'],
       };
+
+      // ── LOCAL: open a URL in a NEW Chrome window ──────────────────────────
+      // Must run before the generic "open <app>" handler below.
+      const newWinMatch = command.match(
+        /^(?:open\s+)?(?:in\s+a\s+)?new\s+(?:chrome\s+)?(?:window|tab)\s+(?:for\s+|with\s+|to\s+|at\s+)?(.+)$/i
+      );
+      if (newWinMatch) {
+        let url = newWinMatch[1].trim().replace(/^(?:go\s+to|open)\s+/i, '');
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        console.log(`  → new Chrome window: ${url}`);
+        try {
+          chromeOpenNewWindow(url);
+          json(res, 200, { result: `Opened a new Chrome window at ${url}.` });
+        } catch (e) {
+          json(res, 200, { result: `Couldn't open a new window: ${e.message}` });
+        }
+        return;
+      }
 
       // ── Website detection: "open [x.com]" or "go to [x]" ─────────────────
       const urlPattern = /(?:^open\s+|^go\s+to\s+)((?:https?:\/\/)?[\w.-]+\.[a-z]{2,}(?:\/\S*)?)/i;
@@ -173,6 +483,75 @@ const server = http.createServer((req, res) => {
           console.log(`  → not found: ${names.join(', ')}`);
           json(res, 200, { result: `Could not find "${names[0]}" on this Mac.` });
         }
+        return;
+      }
+
+      // ── LOCAL: list open browser tabs ─────────────────────────────────────
+      if (/\btabs?\b/i.test(command) && /\b(open|list|show|what|which|my)\b/i.test(command)) {
+        console.log('  → listing Chrome tabs');
+        try {
+          const tabs = chromeListTabs();
+          if (tabs === 'NO_WINDOW') {
+            json(res, 200, { result: 'No Chrome windows are open right now.' });
+          } else {
+            json(res, 200, { result: `Here are your open tabs:\n${tabs}` });
+          }
+        } catch (e) {
+          json(res, 200, { result: `Couldn't read your tabs: ${e.message}` });
+        }
+        return;
+      }
+
+      // ── LOCAL: read / summarise the current website ───────────────────────
+      const readPattern =
+        /\b(read|summari[sz]e|what.?s on|what does (?:this|the)|tell me about)\b.*\b(page|website|site|browser|tab|article|screen|this)\b/i;
+      if (readPattern.test(command)) {
+        console.log('  → reading active Chrome tab');
+        let extracted;
+        try {
+          extracted = chromeReadActiveTab();
+        } catch (e) {
+          const blocked = /JavaScript through AppleScript is turned off|not allowed|Apple Events|-1743/i.test(e.message);
+          json(res, 200, {
+            result: blocked
+              ? 'I need permission to read the page. In Chrome, go to View → Developer → "Allow JavaScript from Apple Events", then ask me again.'
+              : `Couldn't read the page: ${e.message}`,
+          });
+          return;
+        }
+        if (extracted === 'NO_WINDOW') {
+          json(res, 200, { result: 'No Chrome window is open for me to read.' });
+          return;
+        }
+
+        const titleLine = extracted.split('\n')[0] || '';
+        const urlLine   = extracted.split('\n')[1] || '';
+        const pageText  = (extracted.split('===PAGECONTENT===\n')[1] || '')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+
+        const summarise = /summari[sz]e|what.?s on|what does|tell me about/i.test(command);
+        if (!summarise) {
+          json(res, 200, {
+            result: `${titleLine}\n${urlLine}\n\n${pageText.slice(0, 4000)}` +
+              (pageText.length > 4000 ? '\n\n…(say "summarise this page" for the short version)' : ''),
+          });
+          return;
+        }
+
+        // Summarise via Claude, then speak it.
+        const prompt =
+          `Summarise this web page for a student in 3-4 short, spoken sentences. ` +
+          `Be concise and plain.\n\nTitle: ${titleLine}\nURL: ${urlLine}\n\nContent:\n${pageText.slice(0, 12000)}`;
+        const ps = spawn(CLAUDE, ['-p', prompt], { env: { ...process.env }, stdio: ['ignore', 'pipe', 'pipe'] });
+        let outS = '', doneS = false;
+        const tS = setTimeout(() => { ps.kill(); if (!doneS) { doneS = true; json(res, 200, { result: 'Timed out summarising the page.' }); } }, 60000);
+        ps.stdout.on('data', d => { outS += d; });
+        ps.on('close', () => {
+          if (doneS) return; doneS = true; clearTimeout(tS);
+          json(res, 200, { result: stripAnsi(outS) || 'I read the page but got no summary back.' });
+        });
+        ps.on('error', () => { if (!doneS) { doneS = true; json(res, 200, { result: 'Could not reach Claude to summarise the page.' }); } });
         return;
       }
 
@@ -219,9 +598,33 @@ const server = http.createServer((req, res) => {
         return;
       }
 
+      // If the command has an [Attached: name → path, ...] header, read the
+      // files and inject their content so Claude can reason about them.
+      let claudePrompt = command;
+      const attachMatch = command.match(/^\[Attached: (.+?)\]\n([\s\S]*)$/);
+      if (attachMatch) {
+        const refs    = attachMatch[1].split(/, (?=\S+ → )/);
+        const userCmd = attachMatch[2].trim() || 'Describe the attached file(s).';
+        const blocks  = [];
+        for (const ref of refs) {
+          const arrow = ref.lastIndexOf(' → ');
+          if (arrow === -1) continue;
+          const label    = ref.slice(0, arrow).trim();
+          const filePath = ref.slice(arrow + 3).trim();
+          try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            blocks.push(`--- FILE: ${label} ---\n${content}\n--- END FILE ---`);
+          } catch {
+            blocks.push(`--- FILE: ${label} --- (could not be read) ---`);
+          }
+        }
+        claudePrompt = `${userCmd}\n\n${blocks.join('\n\n')}`;
+        console.log(`  📎  injecting ${blocks.length} file(s) into prompt`);
+      }
+
       // stdin:'ignore' is critical — without it, claude waits 3 s for stdin
       // before starting, and the req 'close' handler (removed) was killing it.
-      const proc = spawn(CLAUDE, ['-p', command], {
+      const proc = spawn(CLAUDE, ['-p', claudePrompt], {
         env:   { ...process.env },
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -321,6 +724,10 @@ server.listen(PORT, HOST, () => {
   console.log('  ║      J A R V I S   O N L I N E       ║');
   console.log(`  ║      http://localhost:${PORT}              ║`);
   console.log('  ╚══════════════════════════════════════╝');
+  console.log('');
+  const ip = localIp();
+  if (ip) console.log(`  iPad access: http://${ip}:${PORT}`);
+  else    console.log('  iPad access: (no local network IP detected)');
   console.log('');
   console.log('  Waiting for commands...');
 });

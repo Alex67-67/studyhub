@@ -10,10 +10,27 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ─── THEME (central color system — retheme by changing these) ───
+   --ac is the accent as an R,G,B triplet so alpha variants can be
+   derived via rgba(var(--ac), .x). Keep --accent/-bright in sync. */
+:root {
+  --ac: 0,212,255;               /* accent rgb triplet */
+  --accent: #00d4ff;             /* primary accent */
+  --accent-bright: #00eaff;      /* readout highlight */
+  --warn-rgb: 255,184,64;
+  --warn: #FFB840;               /* warning / <72h gold */
+  --danger-rgb: 255,68,68;
+  --danger: #ff4444;             /* alert / live / <24h red */
+  --success-rgb: 16,212,142;
+  --success: #10d48e;            /* online / streak green */
+  --bg-0: #010812;               /* page base */
+  --glass: rgba(0,12,32,.58);    /* default panel fill */
+}
+
 html, body {
   width: 100%; height: 100%;
-  background: #020610;
-  color: #00d4ff;
+  background: var(--bg-0);
+  color: var(--accent);
   font-family: 'Orbitron', monospace;
   overflow: hidden;
   user-select: none;
@@ -25,57 +42,131 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(ellipse 65% 55% at 50% 50%, rgba(0,50,200,0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(0,30,120,0.05) 0%, transparent 60%);
+    radial-gradient(ellipse 70% 65% at 50% 50%, rgba(0,80,255,0.17) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 40% at 18% 60%, rgba(168,85,247,0.09) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 40% at 82% 60%, rgba(var(--success-rgb),0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 45% at 50% 100%, rgba(0,55,190,0.14) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
   animation: ambPulse 9s ease-in-out infinite;
 }
-@keyframes ambPulse { 0%,100%{opacity:.6;} 50%{opacity:1;} }
+@keyframes ambPulse { 0%,100%{opacity:.7;} 50%{opacity:1;} }
+
+/* ─── AMBIENT FX: drifting grid + scanlines (pure CSS, very low opacity) ─── */
+#fx-grid, #fx-scan {
+  position: fixed; inset: -50px;
+  pointer-events: none; z-index: 1;
+}
+#fx-grid {
+  background-image:
+    linear-gradient(rgba(var(--ac),0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--ac),0.05) 1px, transparent 1px);
+  background-size: 46px 46px;
+  opacity: .5;
+  mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, #000 30%, transparent 80%);
+  animation: fxGridDrift 26s linear infinite;
+}
+@keyframes fxGridDrift {
+  from { transform: translate(0,0); }
+  to   { transform: translate(46px,46px); }
+}
+#fx-scan {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(var(--ac),0.035) 0px,
+    rgba(var(--ac),0.035) 1px,
+    transparent 1px,
+    transparent 4px);
+  opacity: .55;
+  animation: fxScanDrift 14s linear infinite;
+}
+@keyframes fxScanDrift {
+  from { transform: translateY(0); }
+  to   { transform: translateY(4px); }
+}
+
+/* ─── REACTOR RING (arc-reactor concentric rings around neural core) ─── */
+#reactor-ring {
+  position: absolute; inset: -26px;
+  border-radius: 50%; pointer-events: none; z-index: 0;
+}
+#reactor-ring::before, #reactor-ring::after {
+  content: ''; position: absolute; border-radius: 50%;
+}
+#reactor-ring::before {
+  inset: 0;
+  border: 1.5px solid transparent;
+  border-top-color: rgba(var(--ac),0.55);
+  border-right-color: rgba(var(--ac),0.22);
+  box-shadow: 0 0 22px rgba(var(--ac),0.12), inset 0 0 22px rgba(var(--ac),0.06);
+  animation: reactorSpin 18s linear infinite;
+}
+#reactor-ring::after {
+  inset: 16px;
+  border: 1px dashed transparent;
+  border-bottom-color: rgba(var(--ac),0.35);
+  border-left-color: rgba(0,160,255,0.18);
+  animation: reactorSpin 26s linear infinite reverse;
+}
+@keyframes reactorSpin { to { transform: rotate(360deg); } }
+/* Pulse faster + brighter while voice / response panel is active */
+body:has(#response-panel.visible) #reactor-ring::before,
+body:has(#mic-btn.listening) #reactor-ring::before,
+body:has(#circle-wrap.speaking) #reactor-ring::before {
+  border-top-color: rgba(var(--ac),0.95);
+  box-shadow: 0 0 34px rgba(var(--ac),0.30), inset 0 0 28px rgba(var(--ac),0.12);
+  animation-duration: 6s;
+}
+body:has(#response-panel.visible) #reactor-ring::after,
+body:has(#mic-btn.listening) #reactor-ring::after,
+body:has(#circle-wrap.speaking) #reactor-ring::after {
+  animation-duration: 9s;
+}
 
 /* ─── CORNER BRACKETS ─── */
 .corner {
   position: fixed;
-  width: 38px; height: 38px;
+  width: 46px; height: 46px;
   z-index: 10;
   opacity: 0;
   animation: cFade .5s ease forwards;
 }
-.corner-tl { top:16px; left:16px; border-top:1px solid rgba(0,212,255,.4); border-left:1px solid rgba(0,212,255,.4); animation-delay:1.8s; }
-.corner-tr { top:16px; right:16px; border-top:1px solid rgba(0,212,255,.4); border-right:1px solid rgba(0,212,255,.4); animation-delay:2.0s; }
-.corner-bl { bottom:66px; left:16px; border-bottom:1px solid rgba(0,212,255,.4); border-left:1px solid rgba(0,212,255,.4); animation-delay:2.2s; }
-.corner-br { bottom:66px; right:16px; border-bottom:1px solid rgba(0,212,255,.4); border-right:1px solid rgba(0,212,255,.4); animation-delay:2.4s; }
+.corner-tl { top:14px; left:14px; border-top:1px solid rgba(var(--ac),.55); border-left:1px solid rgba(var(--ac),.55); animation-delay:1.8s; }
+.corner-tr { top:14px; right:14px; border-top:1px solid rgba(var(--ac),.55); border-right:1px solid rgba(var(--ac),.55); animation-delay:2.0s; }
+.corner-bl { bottom:110px; left:14px; border-bottom:1px solid rgba(var(--ac),.55); border-left:1px solid rgba(var(--ac),.55); animation-delay:2.2s; }
+.corner-br { bottom:110px; right:14px; border-bottom:1px solid rgba(var(--ac),.55); border-right:1px solid rgba(var(--ac),.55); animation-delay:2.4s; }
 @keyframes cFade { to {opacity:1;} }
 
 /* ─── TOP LABELS ─── */
 #title-bar {
-  position:fixed; top:16px; left:50%; transform:translateX(-50%);
-  font-size:8px; letter-spacing:11px; color:rgba(0,212,255,.2);
+  position:fixed; top:18px; left:50%; transform:translateX(-50%);
+  font-size:9px; letter-spacing:12px; color:rgba(var(--ac),.28);
   z-index:10; opacity:0; animation:cFade .6s ease forwards 2.5s; white-space:nowrap;
 }
 #sys-label {
-  position:fixed; top:20px; left:60px;
-  font-size:6.5px; letter-spacing:3px; color:rgba(0,212,255,.16);
+  position:fixed; top:22px; left:70px;
+  font-size:8px; letter-spacing:3px; color:rgba(var(--ac),.22);
   z-index:10; opacity:0; animation:cFade .6s ease forwards 2.7s;
 }
 
 /* ─── STATUS INDICATOR ─── */
 #status-bar {
-  position:fixed; top:16px; right:60px;
-  display:flex; align-items:center; gap:7px;
+  position:fixed; top:18px; right:70px;
+  display:flex; align-items:center; gap:8px;
   z-index:10; opacity:0; animation:cFade .6s ease forwards 3.0s;
 }
 .sdot {
-  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+  width:8px; height:8px; border-radius:50%; flex-shrink:0;
   transition:background .4s, box-shadow .4s;
 }
-.sdot.online  { background:#1D9E75; box-shadow:0 0 8px rgba(29,158,117,.9); animation:sdotPulse 2.5s ease-in-out infinite; }
-.sdot.offline { background:#E24B4A; box-shadow:0 0 8px rgba(226,75,74,.9); }
-.sdot.busy    { background:#EF9F27; box-shadow:0 0 10px rgba(239,159,39,1); animation:sdotPulse .4s ease-in-out infinite; }
-.sdot.init    { background:rgba(0,212,255,.22); }
+.sdot.online  { background:var(--success); box-shadow:0 0 10px rgba(var(--success-rgb),.95); animation:sdotPulse 2.5s ease-in-out infinite; }
+.sdot.offline { background:#E24B4A; box-shadow:0 0 10px rgba(226,75,74,.95); }
+.sdot.busy    { background:#EF9F27; box-shadow:0 0 12px rgba(239,159,39,1);   animation:sdotPulse .4s ease-in-out infinite; }
+.sdot.init    { background:rgba(var(--ac),.25); }
 @keyframes sdotPulse { 0%,100%{opacity:1;} 50%{opacity:.12;} }
 #status-text {
-  font-size:6.5px; letter-spacing:2.5px; color:rgba(0,212,255,.28);
+  font-size:8px; letter-spacing:2.5px; color:rgba(var(--ac),.38);
   transition:color .4s; white-space:nowrap;
 }
 
@@ -84,8 +175,9 @@ body::before {
   position:fixed; inset:0;
   display:flex; flex-direction:column;
   align-items:center; justify-content:space-between;
-  padding:50px 36px 68px;
+  padding:58px 34px 116px;
   z-index:2;
+  transition:padding-right .35s cubic-bezier(.22,1,.36,1);
 }
 
 /* ─── TOP: CLOCK ─── */
@@ -96,78 +188,154 @@ body::before {
 @keyframes slideDown { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
 
 #clock {
-  font-size:clamp(52px,7vw,90px);
-  font-weight:800; letter-spacing:10px; color:#00d4ff;
-  text-shadow:0 0 18px rgba(0,212,255,.95),0 0 55px rgba(0,212,255,.45),0 0 110px rgba(0,120,255,.22);
+  font-size:clamp(44px,5.4vw,74px);
+  font-weight:800; letter-spacing:9px; color:var(--accent);
+  text-shadow:0 0 14px rgba(var(--ac),.9),0 0 42px rgba(var(--ac),.4),0 0 90px rgba(0,130,255,.2);
   animation:clockGlow 2.5s ease-in-out infinite alternate;
 }
 @keyframes clockGlow {
-  from{text-shadow:0 0 18px rgba(0,212,255,.95),0 0 55px rgba(0,212,255,.45),0 0 110px rgba(0,120,255,.22);}
-  to  {text-shadow:0 0 28px rgba(0,212,255,1),  0 0 85px rgba(0,212,255,.65),0 0 170px rgba(0,120,255,.38);}
+  from{text-shadow:0 0 14px rgba(var(--ac),.9),0 0 42px rgba(var(--ac),.4),0 0 90px rgba(0,130,255,.2);}
+  to  {text-shadow:0 0 20px rgba(var(--ac),1), 0 0 60px rgba(var(--ac),.55),0 0 130px rgba(0,130,255,.3);}
 }
 #date-line {
-  font-size:9.5px; font-weight:500; letter-spacing:5.5px;
-  color:rgba(0,212,255,.3); margin-top:8px;
+  font-size:11px; font-weight:500; letter-spacing:7px;
+  color:rgba(var(--ac),.45); margin-top:8px;
 }
 
 /* ─── MIDDLE ROW ─── */
 #middle {
-  display:flex; align-items:center; justify-content:center;
-  gap:clamp(18px,3vw,50px); flex:1; width:100%; max-width:1360px;
+  display:flex; align-items:stretch; justify-content:space-between;
+  gap:clamp(20px,3.5vw,56px); flex:1; width:100%; max-width:1820px;
 }
 
 /* ─── INFO PANELS ─── */
 .panels {
-  display:flex; flex-direction:column; gap:11px;
-  width:clamp(138px,14vw,188px);
+  display:flex; flex-direction:column; gap:10px;
+  width:clamp(168px,15vw,232px);
+  justify-content:stretch;
 }
 .panel-left  { opacity:0; animation:slideRight .9s cubic-bezier(.22,1,.36,1) forwards 1.0s; }
 .panel-right { opacity:0; animation:slideLeft  .9s cubic-bezier(.22,1,.36,1) forwards 1.2s; }
-@keyframes slideRight { from{opacity:0;transform:translateX(-22px);} to{opacity:1;transform:translateX(0);} }
-@keyframes slideLeft  { from{opacity:0;transform:translateX( 22px);} to{opacity:1;transform:translateX(0);} }
+@keyframes slideRight { from{opacity:0;transform:translateX(-28px);} to{opacity:1;transform:translateX(0);} }
+@keyframes slideLeft  { from{opacity:0;transform:translateX( 28px);} to{opacity:1;transform:translateX(0);} }
 
+/* ─── BASE PANEL (weather / cyan) ─── */
 .iblock {
-  background:rgba(0,8,22,.85);
-  border:1px solid rgba(0,212,255,.07);
-  border-top:2px solid rgba(0,190,255,.55);
-  padding:12px 13px;
-  display:flex; align-items:center; gap:10px;
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  transition:border-top-color .3s, background .3s;
+  background:var(--glass);
+  border:1px solid rgba(var(--ac),.18);
+  border-top:3px solid var(--accent);
+  padding:10px 12px;
+  flex:1 1 auto;                 /* grow to fill column — no empty gaps between panels */
+  display:flex; align-items:center; gap:8px;
+  backdrop-filter:blur(12px) saturate(1.2); -webkit-backdrop-filter:blur(12px) saturate(1.2);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(var(--ac),.10), inset 0 1px 0 rgba(var(--ac),.09);
+  transition:border-top-color .3s, background .3s, box-shadow .3s, transform .3s;
 }
 .iblock:hover {
-  border-top-color:rgba(0,212,255,.85);
-  background:rgba(0,12,30,.9);
+  background:rgba(0,22,52,.72);
+  transform:translateY(-1px);
+  box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(var(--ac),.22), inset 0 1px 0 rgba(var(--ac),.14);
 }
 .iblock-content { flex:1; min-width:0; }
 .ilabel {
-  font-size:6px; letter-spacing:2.5px; color:rgba(0,212,255,.3);
-  text-transform:uppercase; margin-bottom:6px;
+  font-size:7.5px; letter-spacing:2.5px; color:rgba(var(--ac),.75);
+  text-transform:uppercase; margin-bottom:5px; font-weight:600;
 }
 .ival {
-  font-size:clamp(15px,1.9vw,21px); font-weight:700;
-  color:#00d4ff;
-  text-shadow:0 0 10px rgba(0,212,255,.5);
-  line-height:1.15; word-break:break-word;
+  font-family:'Fira Code','SF Mono','JetBrains Mono','Courier New',monospace;
+  font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1;
+  font-size:clamp(15px,1.65vw,21px); font-weight:600;
+  color:var(--accent-bright);
+  text-shadow:0 0 10px rgba(var(--ac),.5);
+  line-height:1.1; word-break:break-word;
 }
 .isub {
-  font-size:6.5px; letter-spacing:1.8px; color:rgba(0,212,255,.25);
+  font-size:7.5px; letter-spacing:2px; color:rgba(var(--ac),.58);
   margin-top:5px; text-transform:uppercase;
 }
 .iblock-dot {
-  width:7px; height:7px; border-radius:50%; flex-shrink:0;
-  background:#1D9E75; box-shadow:0 0 7px rgba(29,158,117,.8);
+  width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:5px;
+  background:var(--success); box-shadow:0 0 10px rgba(var(--success-rgb),.85);
   animation:sdotPulse 3s ease-in-out infinite;
 }
-.iblock:nth-child(2) .iblock-dot { animation-delay:1.4s; }
+.iblock:nth-child(2) .iblock-dot { animation-delay:.9s; }
+.iblock:nth-child(3) .iblock-dot { animation-delay:1.8s; }
+.iblock:nth-child(4) .iblock-dot { animation-delay:2.7s; }
+
+/* ─── STREAK (emerald) ─── */
+.iblock-streak {
+  border-top-color:var(--success);
+  background:rgba(0,20,12,.58);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(var(--success-rgb),.10), inset 0 1px 0 rgba(var(--success-rgb),.07);
+}
+.iblock-streak:hover { background:rgba(0,28,18,.72); box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(var(--success-rgb),.22), inset 0 1px 0 rgba(var(--success-rgb),.12); }
+.iblock-streak .ilabel { color:rgba(var(--success-rgb),.78); }
+.iblock-streak .ival   { color:var(--success); text-shadow:0 0 18px rgba(var(--success-rgb),.72); }
+.iblock-streak .isub   { color:rgba(var(--success-rgb),.58); }
+.iblock-streak .iblock-dot { background:var(--success); box-shadow:0 0 10px rgba(var(--success-rgb),.88); }
+
+/* ─── WORLD CUP (red/gold) ─── */
+.iblock-wc {
+  border-top-color:#E53935;
+  background:rgba(26,6,8,.6);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(229,57,53,.10), inset 0 1px 0 rgba(229,57,53,.07);
+}
+.iblock-wc:hover { background:rgba(36,8,10,.72); box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(var(--warn-rgb),.22), inset 0 1px 0 rgba(var(--warn-rgb),.1); border-top-color:var(--warn); }
+.iblock-wc .ilabel    { color:rgba(255,200,90,.78); }
+.iblock-wc .ival      { color:#ffd07a; text-shadow:0 0 18px rgba(255,165,45,.65); }
+.iblock-wc .isub      { color:rgba(255,200,90,.58); }
+.iblock-wc .iblock-dot{ background:#e23b3b; box-shadow:0 0 10px rgba(226,59,59,.9); }
+.iblock-wc.wc-live .iblock-dot { background:var(--danger); box-shadow:0 0 14px rgba(var(--danger-rgb),1); animation:sdotPulse .65s ease-in-out infinite; }
+.iblock-wc.wc-live .ival       { color:#ff6a5a; text-shadow:0 0 18px rgba(255,70,60,.75); }
+.iblock-wc.wc-live { border-top-color:var(--danger); box-shadow:0 0 32px rgba(var(--danger-rgb),.14), inset 0 1px 0 rgba(var(--danger-rgb),.08); }
+
+/* ─── EXAM (purple) ─── */
+.iblock-exam {
+  border-top-color:#a855f7;
+  background:rgba(16,6,30,.6);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(168,85,247,.10), inset 0 1px 0 rgba(168,85,247,.07);
+}
+.iblock-exam:hover { background:rgba(22,8,42,.72); box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(168,85,247,.22), inset 0 1px 0 rgba(168,85,247,.12); }
+.iblock-exam .ilabel { color:rgba(192,132,252,.78); }
+.iblock-exam .ival   { color:#c084fc; text-shadow:0 0 18px rgba(168,85,247,.75); }
+.iblock-exam .isub   { color:rgba(192,132,252,.58); }
+.iblock-exam .iblock-dot { background:#a855f7; box-shadow:0 0 10px rgba(168,85,247,.88); }
+/* Alert state — nearest exam < 24h away: red/gold */
+.iblock-exam.exam-urgent {
+  border-top-color:var(--danger);
+  background:rgba(30,8,4,.66);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 40px rgba(var(--danger-rgb),.22), inset 0 1px 0 rgba(var(--warn-rgb),.12);
+  animation:examAlertPulse 1.4s ease-in-out infinite;
+}
+.iblock-exam.exam-urgent .ilabel { color:rgba(var(--warn-rgb),.92); }
+.iblock-exam.exam-urgent .ival   { color:var(--warn); text-shadow:0 0 20px rgba(var(--warn-rgb),.9); }
+.iblock-exam.exam-urgent .isub   { color:rgba(255,120,90,.78); }
+.iblock-exam.exam-urgent .iblock-dot { background:var(--danger); box-shadow:0 0 12px rgba(var(--danger-rgb),1); animation:sdotPulse .6s ease-in-out infinite; }
+@keyframes examAlertPulse {
+  0%,100% { box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 36px rgba(var(--danger-rgb),.18), inset 0 1px 0 rgba(var(--warn-rgb),.10); }
+  50%     { box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 56px rgba(var(--danger-rgb),.40), inset 0 1px 0 rgba(var(--warn-rgb),.18); }
+}
+
+/* ─── TASKS (electric blue) ─── */
+.iblock-tasks {
+  border-top-color:#3b82f6;
+  background:rgba(4,12,34,.6);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(59,130,246,.10), inset 0 1px 0 rgba(59,130,246,.07);
+}
+.iblock-tasks:hover { background:rgba(6,18,48,.72); box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(59,130,246,.22), inset 0 1px 0 rgba(59,130,246,.12); }
+.iblock-tasks .ilabel { color:rgba(96,165,250,.78); }
+.iblock-tasks .ival   { color:#60a5fa; text-shadow:0 0 18px rgba(59,130,246,.75); }
+.iblock-tasks .isub   { color:rgba(96,165,250,.58); }
+.iblock-tasks .iblock-dot { background:#3b82f6; box-shadow:0 0 10px rgba(59,130,246,.88); }
 
 /* ─── CENTER NEURAL WRAP ─── */
 #circle-wrap {
   position:relative; flex-shrink:0;
-  width:clamp(290px,31vw,430px);
-  height:clamp(290px,31vw,430px);
+  width:clamp(280px,29vw,430px);
+  height:clamp(280px,29vw,430px);
   border-radius:50%;
   opacity:0;
+  align-self:center;
   animation:circlePop 1.4s cubic-bezier(.22,1,.36,1) forwards .2s;
   transition:box-shadow .7s ease;
   box-shadow:0 0 55px rgba(0,80,220,.1), 0 0 110px rgba(0,50,180,.05);
@@ -233,14 +401,14 @@ body::before {
 }
 .cl-main {
   position:relative; display:block;
-  font-size:8px; letter-spacing:5px; color:rgba(0,212,255,.82);
-  text-shadow:0 0 10px rgba(0,212,255,.65);
+  font-size:10px; letter-spacing:7px; color:rgba(var(--ac),.9);
+  text-shadow:0 0 14px rgba(var(--ac),.75);
   animation:lblBlink 5s ease-in-out infinite 3.5s;
 }
 .cl-sub {
   position:relative; display:block;
-  font-size:5.5px; letter-spacing:4px; color:rgba(0,212,255,.28);
-  margin-top:3px;
+  font-size:7px; letter-spacing:5px; color:rgba(var(--ac),.38);
+  margin-top:4px;
 }
 @keyframes lblBlink { 0%,88%,100%{opacity:.82;} 92%{opacity:.05;} 96%{opacity:.82;} }
 
@@ -249,37 +417,39 @@ body::before {
 
 /* ─── RESPONSE PANEL ─── */
 #response-panel {
-  position:fixed; bottom:66px; left:50%;
+  position:fixed; bottom:106px; left:50%;
   transform:translateX(-50%) translateY(14px);
   width:min(660px,calc(100vw - 72px));
   max-height:260px;
-  background:rgba(2,6,22,.97);
-  border:1px solid rgba(0,212,255,.14);
+  background:rgba(2,8,24,.66);
+  border:1px solid rgba(var(--ac),.2);
+  border-radius:2px;
   overflow:hidden; opacity:0; pointer-events:none;
   transition:opacity .3s, transform .4s cubic-bezier(.22,1,.36,1);
   z-index:30; display:flex; flex-direction:column;
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  backdrop-filter:blur(16px) saturate(1.2); -webkit-backdrop-filter:blur(16px) saturate(1.2);
+  box-shadow:0 18px 50px rgba(0,0,0,.6), 0 6px 18px rgba(0,0,0,.45), 0 0 50px rgba(var(--ac),.16), inset 0 1px 0 rgba(var(--ac),.1);
 }
 #response-panel.visible { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
 #response-hd {
   display:flex; align-items:center; justify-content:space-between;
   padding:8px 14px;
-  border-bottom:1px solid rgba(0,212,255,.07);
+  border-bottom:1px solid rgba(var(--ac),.07);
   flex-shrink:0; gap:12px;
-  background:rgba(0,212,255,.022);
+  background:rgba(var(--ac),.022);
 }
 #response-cmd {
-  font-size:6.5px; letter-spacing:2px; color:rgba(0,212,255,.38);
+  font-size:6.5px; letter-spacing:2px; color:rgba(var(--ac),.38);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;
 }
 #response-close {
-  background:none; border:1px solid rgba(0,212,255,.14);
-  color:rgba(0,212,255,.3); font-family:'Orbitron',monospace;
+  background:none; border:1px solid rgba(var(--ac),.14);
+  color:rgba(var(--ac),.3); font-family:'Orbitron',monospace;
   font-size:6px; letter-spacing:1.5px;
   padding:3px 9px; cursor:pointer; flex-shrink:0;
   transition:border-color .2s,color .2s;
 }
-#response-close:hover { border-color:rgba(0,212,255,.5); color:#00d4ff; }
+#response-close:hover { border-color:rgba(var(--ac),.5); color:var(--accent); }
 #response-body {
   flex:1; overflow-y:auto; padding:13px 16px;
   font-family:'SF Mono','Fira Code','Courier New',monospace;
@@ -288,15 +458,15 @@ body::before {
 }
 #response-body::-webkit-scrollbar { width:3px; }
 #response-body::-webkit-scrollbar-track { background:transparent; }
-#response-body::-webkit-scrollbar-thumb { background:rgba(0,212,255,.16); border-radius:2px; }
-.r-loading { color:rgba(0,212,255,.5); font-family:'Orbitron',monospace; font-size:9px; letter-spacing:3px; }
+#response-body::-webkit-scrollbar-thumb { background:rgba(var(--ac),.16); border-radius:2px; }
+.r-loading { color:rgba(var(--ac),.5); font-family:'Orbitron',monospace; font-size:9px; letter-spacing:3px; }
 
 /* ─── TOAST ─── */
 #toast {
   position:fixed; bottom:68px; left:50%;
   transform:translateX(-50%) translateY(10px);
-  background:rgba(2,6,22,.97); border:1px solid rgba(0,212,255,.38);
-  padding:8px 20px; font-size:7.5px; letter-spacing:2.5px; color:#00d4ff;
+  background:rgba(2,6,22,.97); border:1px solid rgba(var(--ac),.38);
+  padding:8px 20px; font-size:7.5px; letter-spacing:2.5px; color:var(--accent);
   opacity:0; transition:opacity .25s,transform .25s;
   pointer-events:none; z-index:50; white-space:nowrap;
 }
@@ -310,33 +480,34 @@ body::before {
 }
 @keyframes wkFade { 0%{opacity:1;} 65%{opacity:1;} 100%{opacity:0;} }
 #wk-main {
-  font-size:clamp(17px,2.7vw,25px); font-weight:900; letter-spacing:15px; color:#00d4ff;
-  text-shadow:0 0 28px rgba(0,212,255,1),0 0 75px rgba(0,212,255,.6);
+  font-size:clamp(17px,2.7vw,25px); font-weight:900; letter-spacing:15px; color:var(--accent);
+  text-shadow:0 0 28px rgba(var(--ac),1),0 0 75px rgba(var(--ac),.6);
   animation:wkFlick .09s ease-in-out 5;
 }
 @keyframes wkFlick { 0%,100%{opacity:1;} 50%{opacity:.04;} }
-#wk-sub { font-size:8.5px; letter-spacing:7px; color:rgba(0,212,255,.32); }
+#wk-sub { font-size:8.5px; letter-spacing:7px; color:rgba(var(--ac),.32); }
 #wk-bar {
   width:clamp(220px,26vw,320px); height:2px;
-  background:rgba(0,212,255,.07); margin-top:8px; overflow:hidden;
+  background:rgba(var(--ac),.07); margin-top:8px; overflow:hidden;
 }
 #wk-bar::after {
   content:''; display:block; height:100%;
-  background:linear-gradient(to right,rgba(0,212,255,.4),rgba(0,212,255,.9),rgba(0,212,255,.4));
+  background:linear-gradient(to right,rgba(var(--ac),.4),rgba(var(--ac),.9),rgba(var(--ac),.4));
   width:0%; animation:wkLoad 2.2s cubic-bezier(.4,0,.2,1) forwards .3s;
-  box-shadow:0 0 12px rgba(0,212,255,.8);
+  box-shadow:0 0 12px rgba(var(--ac),.8);
 }
 @keyframes wkLoad { from{width:0%;} to{width:100%;} }
 
 /* ─── BOTTOM COMMAND BAR ─── */
 #cmd-bar {
   position:fixed; bottom:0; left:0; right:0;
-  height:58px;
+  height:80px;
   display:flex; align-items:center;
-  background:rgba(2,6,18,.94);
-  border-top:1px solid rgba(0,212,255,.09);
-  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
-  padding:0 18px; gap:14px;
+  background:rgba(2,6,18,.96);
+  border-top:1px solid rgba(var(--ac),.14);
+  box-shadow:0 -4px 32px rgba(0,80,200,.1);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  padding:0 22px; gap:16px;
   z-index:20;
   opacity:0; animation:cFade .6s ease forwards 3.4s;
 }
@@ -354,7 +525,7 @@ body::before {
   animation:sdotPulse 2.5s ease-in-out infinite;
 }
 .cmd-s-txt {
-  font-size:6px; letter-spacing:1.8px; color:rgba(0,212,255,.24);
+  font-size:8px; letter-spacing:2px; color:rgba(var(--ac),.32);
   overflow:hidden; text-overflow:ellipsis;
 }
 
@@ -365,38 +536,66 @@ body::before {
 
 /* ─── INPUT ROW ─── */
 #input-row {
-  display:flex; align-items:center; width:100%; height:38px;
-  border:1px solid rgba(0,212,255,.16);
+  display:flex; align-items:center; width:100%; height:54px;
+  border:1px solid rgba(var(--ac),.16);
   background:rgba(0,8,22,.75);
   transition:border-color .3s, box-shadow .3s;
   overflow:hidden;
 }
 #input-row:focus-within {
-  border-color:rgba(0,212,255,.48);
-  box-shadow:0 0 22px rgba(0,212,255,.1), inset 0 0 10px rgba(0,212,255,.04);
+  border-color:rgba(var(--ac),.48);
+  box-shadow:0 0 22px rgba(var(--ac),.1), inset 0 0 10px rgba(var(--ac),.04);
 }
 #input-row::before {
   content:'›';
   padding:0 12px;
-  font-size:16px; color:rgba(0,212,255,.26); flex-shrink:0;
+  font-size:16px; color:rgba(var(--ac),.26); flex-shrink:0;
 }
 #jarvis-inp {
   flex:1; background:transparent; border:none; outline:none;
   padding:0; font-family:'Orbitron',monospace;
-  font-size:9px; letter-spacing:2.5px;
-  color:#00d4ff; caret-color:rgba(0,212,255,.9); user-select:text;
+  font-size:13px; letter-spacing:2.5px;
+  color:var(--accent); caret-color:rgba(var(--ac),.9); user-select:text;
 }
-#jarvis-inp::placeholder { color:rgba(0,212,255,.14); letter-spacing:2px; }
+#jarvis-inp::placeholder { color:rgba(var(--ac),.25); letter-spacing:2px; }
+
+#attach-btn {
+  display:flex; align-items:center; justify-content:center;
+  border-left:1px solid rgba(var(--ac),.1);
+  color:rgba(var(--ac),.3); font-size:15px;
+  padding:0 12px; height:100%; cursor:pointer; flex-shrink:0;
+  transition:color .2s,background .2s; line-height:1;
+  user-select:none;
+}
+#attach-btn:hover { color:var(--accent); background:rgba(var(--ac),.04); }
+
+#file-chips {
+  position:fixed; bottom:106px; left:0; right:0;
+  display:flex; flex-wrap:wrap; gap:6px; padding:6px 18px;
+  z-index:19; background:rgba(2,6,18,.85);
+  border-top:1px solid rgba(var(--ac),.06);
+}
+#file-chips:empty { display:none; }
+.file-chip {
+  display:flex; align-items:center; gap:6px;
+  background:rgba(var(--ac),.07); border:1px solid rgba(var(--ac),.2);
+  color:rgba(var(--ac),.7); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:1px; padding:4px 8px;
+}
+.file-chip-x {
+  cursor:pointer; color:rgba(var(--ac),.35); font-size:11px; line-height:1;
+}
+.file-chip-x:hover { color:var(--accent); }
 
 #mic-btn {
   background:none; border:none;
-  border-left:1px solid rgba(0,212,255,.1);
-  color:rgba(0,212,255,.26); font-family:'Orbitron',monospace;
-  font-size:6px; letter-spacing:2px;
-  padding:0 12px; height:100%; cursor:pointer; flex-shrink:0;
+  border-left:1px solid rgba(var(--ac),.12);
+  color:rgba(var(--ac),.35); font-family:'Orbitron',monospace;
+  font-size:9px; letter-spacing:2px;
+  padding:0 15px; height:100%; cursor:pointer; flex-shrink:0;
   transition:color .2s,background .2s;
 }
-#mic-btn:hover { color:#00d4ff; background:rgba(0,212,255,.04); }
+#mic-btn:hover { color:var(--accent); background:rgba(var(--ac),.04); }
 #mic-btn.listening {
   color:#E24B4A; background:rgba(226,75,74,.07);
   border-left-color:rgba(226,75,74,.28);
@@ -412,35 +611,63 @@ body::before {
 }
 #send-btn {
   background:none; border:none;
-  border-left:1px solid rgba(0,212,255,.1);
-  cursor:pointer; color:rgba(0,212,255,.26);
-  font-family:'Orbitron',monospace; font-size:6.5px; letter-spacing:2px;
-  padding:0 13px; height:100%;
+  border-left:1px solid rgba(var(--ac),.12);
+  cursor:pointer; color:rgba(var(--ac),.38);
+  font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px;
+  padding:0 18px; height:100%;
   transition:color .2s,background .2s; flex-shrink:0;
 }
-#send-btn:hover { color:#00d4ff; background:rgba(0,212,255,.06); }
+#send-btn:hover { color:var(--accent); background:rgba(var(--ac),.07); }
+
+#agent-btn {
+  background:none; border:none;
+  border-left:1px solid rgba(139,92,246,.25);
+  cursor:pointer; color:rgba(139,92,246,.6);
+  font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px;
+  padding:0 18px; height:100%;
+  transition:color .2s,background .2s; flex-shrink:0;
+}
+#agent-btn:hover { color:#a78bfa; background:rgba(139,92,246,.1); }
 
 /* ─── MUTE BUTTON ─── */
 #mute-btn {
-  position:fixed; bottom:62px; right:16px;
-  background:rgba(2,6,18,.92); border:1px solid rgba(0,212,255,.09);
-  color:rgba(0,212,255,.22); font-family:'Orbitron',monospace;
-  font-size:6px; letter-spacing:2px; padding:4px 10px;
+  position:fixed; bottom:110px; right:16px;
+  background:rgba(2,6,18,.92); border:1px solid rgba(var(--ac),.1);
+  color:rgba(var(--ac),.28); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:5px 12px;
   cursor:pointer; z-index:10; transition:all .2s;
   opacity:0; animation:cFade .6s ease forwards 4.0s;
 }
-#mute-btn:hover { border-color:rgba(0,212,255,.32); color:rgba(0,212,255,.52); }
+#mute-btn:hover { border-color:rgba(var(--ac),.32); color:rgba(var(--ac),.52); }
 #mute-btn.muted { color:rgba(226,75,74,.5); border-color:rgba(226,75,74,.28); }
 
+/* ─── WAKE WORD TOGGLE (above mute) ─── */
+#wake-btn {
+  position:fixed; bottom:138px; right:16px;
+  background:rgba(2,6,18,.92); border:1px solid rgba(var(--ac),.1);
+  color:rgba(var(--ac),.28); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:5px 12px;
+  cursor:pointer; z-index:10; transition:all .2s;
+  opacity:0; animation:cFade .6s ease forwards 4.1s;
+}
+#wake-btn:hover { border-color:rgba(var(--ac),.32); color:rgba(var(--ac),.52); }
+#wake-btn.off { color:rgba(var(--ac),.18); border-color:rgba(var(--ac),.06); }
+#wake-btn.blocked { color:rgba(var(--danger-rgb),.55); border-color:rgba(var(--danger-rgb),.3); cursor:default; }
+
+/* cmd-bar mic dot states */
+.cmd-s-dot.off { background:#555f6e; box-shadow:none; animation:none; }
+.cmd-s-dot.blocked { background:var(--danger); box-shadow:0 0 5px rgba(var(--danger-rgb),.8); animation:none; }
+
 /* ─── RESPONSIVE ─── */
-@media (max-height:660px) {
-  #app { padding:44px 28px 66px; }
+@media (max-height:700px) {
+  #app { padding:44px 20px 74px; }
   .panels { gap:8px; }
   #clock { font-size:clamp(42px,6vw,72px); }
+  #study-timer { width:112px; height:112px; }
 }
-@media (max-width:860px) {
-  .panels { width:115px; }
-  .ival { font-size:13px; }
+@media (max-width:960px) {
+  .panels { width:clamp(180px,18vw,240px); }
+  .ival { font-size:clamp(22px,3vw,36px); }
   .cmd-side { display:none; }
 }
 
@@ -475,8 +702,8 @@ body::before {
   transform:translateX(-50%) translateY(-50%);
   width:min(520px,calc(100vw - 80px));
   background:rgba(2,6,22,.90);
-  border:1px solid rgba(0,212,255,.15);
-  border-top:2px solid rgba(0,212,255,.52);
+  border:1px solid rgba(var(--ac),.15);
+  border-top:2px solid rgba(var(--ac),.52);
   padding:18px 22px;
   z-index:25; opacity:0; pointer-events:none;
   transition:opacity .5s ease;
@@ -484,7 +711,7 @@ body::before {
 }
 #greeting-panel.visible { opacity:1; }
 #greeting-label {
-  font-size:6px; letter-spacing:3px; color:rgba(0,212,255,.30); margin-bottom:10px;
+  font-size:6px; letter-spacing:3px; color:rgba(var(--ac),.30); margin-bottom:10px;
 }
 #greeting-text {
   font-family:'SF Mono','Fira Code','Courier New',monospace;
@@ -492,9 +719,246 @@ body::before {
   color:rgba(180,235,255,.82);
 }
 
+/* ─── TIMETABLE STRIP (below clock) ─── */
+#tt-strip {
+  margin-top:14px;
+  opacity:0; animation:cFade .6s ease forwards 1.4s;
+}
+.tt-strip-inner {
+  display:flex; align-items:center; gap:10px;
+  overflow-x:auto; padding:4px 2px;
+  scrollbar-width:none; justify-content:center;
+}
+.tt-strip-inner::-webkit-scrollbar { display:none; }
+.tt-lesson-pill {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(var(--ac),.05); border:1px solid rgba(var(--ac),.12);
+  border-left:3px solid var(--pill-color, rgba(var(--ac),.5));
+  padding:7px 14px; flex-shrink:0;
+}
+.tt-lesson-pill.now {
+  background:rgba(var(--ac),.11);
+  border-left-color:var(--pill-color, var(--accent));
+  box-shadow:0 0 14px rgba(var(--ac),.13);
+}
+.tt-lesson-pill.next { border-left-style:dashed; }
+.pill-time { font-size:10px; letter-spacing:1.5px; color:rgba(var(--ac),.42); font-weight:500; }
+.pill-name { font-size:12px; letter-spacing:2px; color:rgba(var(--ac),.75); font-weight:600; }
+.tt-lesson-pill.now .pill-name { color:var(--accent-bright); text-shadow:0 0 8px rgba(var(--ac),.5); }
+.pill-countdown { font-size:10px; letter-spacing:1.5px; color:rgba(255,180,50,.9); margin-left:4px; font-weight:600; }
+.tt-strip-empty { font-size:10px; letter-spacing:4px; color:rgba(var(--ac),.22); }
+
+/* ─── STUDY TIMER (fixed top-right) ─── */
+#study-timer {
+  position:fixed; top:48px; right:60px;
+  width:148px; height:148px;
+  z-index:10; cursor:pointer; user-select:none;
+  opacity:0; animation:cFade .6s ease forwards 2.2s;
+}
+#study-timer svg { width:100%; height:100%; transform:rotate(-90deg); overflow:visible; }
+.st-bg   { fill:none; stroke:rgba(var(--ac),.08); stroke-width:6; }
+.st-ring {
+  fill:none; stroke:rgba(var(--ac),.28); stroke-width:6; stroke-linecap:round;
+  stroke-dasharray:314.16; stroke-dashoffset:0;
+  transition:stroke-dashoffset .95s linear, stroke .4s;
+}
+.st-ring.active { stroke:var(--accent); filter:drop-shadow(0 0 8px rgba(var(--ac),.75)); }
+#st-center {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+#st-time    { font-size:26px; font-weight:800; color:var(--accent-bright);
+  text-shadow:0 0 16px rgba(var(--ac),.85); letter-spacing:2px; }
+#st-label   { font-size:8px; letter-spacing:3px; color:rgba(var(--ac),.45); margin-top:4px; }
+#st-session { font-size:7px; letter-spacing:1.5px; color:rgba(var(--ac),.28); margin-top:3px;
+  max-width:110px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#st-hint {
+  position:absolute; bottom:-20px; left:50%; transform:translateX(-50%);
+  font-size:7px; letter-spacing:2px; color:rgba(var(--ac),.18); white-space:nowrap;
+}
+
+/* ─── SPOTIFY WIDGET ─── */
+.iblock-spotify {
+  border-top-color:#1ed760;
+  background:rgba(2,18,8,.6);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(30,215,96,.10), inset 0 1px 0 rgba(30,215,96,.07);
+}
+.iblock-spotify:hover {
+  border-top-color:#1fdf64;
+  background:rgba(4,24,12,.72);
+  box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(30,215,96,.2), inset 0 1px 0 rgba(30,215,96,.12);
+}
+.iblock-spotify .ilabel { color:rgba(30,215,96,.82); }
+.iblock-spotify .ival   { color:#1ed760; text-shadow:0 0 14px rgba(30,215,96,.6);
+  font-size:clamp(10px,1.1vw,13px); }
+.iblock-spotify .isub   { color:rgba(30,215,96,.55); }
+.iblock-spotify .iblock-dot { background:#1ed760; box-shadow:0 0 10px rgba(30,215,96,.9); }
+#spotify-art {
+  width:48px; height:48px; border-radius:3px; object-fit:cover; flex-shrink:0;
+  background:rgba(30,215,96,.05); border:1px solid rgba(30,215,96,.14);
+}
+#spotify-art.hidden { display:none; }
+.spotify-controls { display:flex; gap:6px; margin-top:8px; }
+.sp-btn {
+  background:none; border:1px solid rgba(30,215,96,.2);
+  color:rgba(30,215,96,.55); font-size:11px; padding:3px 9px; cursor:pointer;
+  transition:color .2s, border-color .2s, background .2s;
+}
+.sp-btn:hover { color:#1ed760; border-color:rgba(30,215,96,.55); background:rgba(30,215,96,.08); }
+#spotify-connect-btn {
+  background:rgba(30,215,96,.07); border:1px solid rgba(30,215,96,.22);
+  color:rgba(30,215,96,.7); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:6px 10px; cursor:pointer;
+  margin-top:8px; width:100%; transition:all .2s;
+}
+#spotify-connect-btn:hover { background:rgba(30,215,96,.16); color:#1ed760; }
+
+/* ─── AGENDA PANEL ─── */
+.iblock-agenda {
+  border-top-color:#f59e0b;
+  background:rgba(20,12,0,.6);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(245,158,11,.09), inset 0 1px 0 rgba(245,158,11,.06);
+}
+.iblock-agenda:hover { background:rgba(28,16,0,.72); box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(245,158,11,.18), inset 0 1px 0 rgba(245,158,11,.1); }
+.iblock-agenda .ilabel { color:rgba(250,200,70,.82); }
+.iblock-agenda .iblock-dot { background:#f59e0b; box-shadow:0 0 9px rgba(245,158,11,.88); }
+.agenda-list { display:flex; flex-direction:column; gap:3px; margin-top:4px; }
+.agenda-item {
+  font-size:7.5px; letter-spacing:1.5px; line-height:1.6;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.agenda-item.lesson { color:rgba(var(--ac),.72); }
+.agenda-item.hw     { color:rgba(255,185,50,.82); }
+.agenda-item.done   { opacity:.32; text-decoration:line-through; }
+.agenda-empty       { font-size:7.5px; letter-spacing:2px; color:rgba(250,200,70,.32); }
+
+/* ─── SYSTEM STATUS PANEL ─── */
+.iblock-sysstat {
+  border-top-color:rgba(var(--success-rgb),.7);
+  background:rgba(0,14,8,.6);
+  box-shadow:0 10px 34px rgba(0,0,0,.5), 0 3px 12px rgba(0,0,0,.4), 0 0 30px rgba(var(--success-rgb),.08), inset 0 1px 0 rgba(var(--success-rgb),.06);
+}
+.iblock-sysstat:hover { background:rgba(0,20,12,.72); box-shadow:0 14px 40px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.42), 0 0 46px rgba(var(--success-rgb),.16), inset 0 1px 0 rgba(var(--success-rgb),.1); }
+.iblock-sysstat .ilabel { color:rgba(var(--success-rgb),.78); }
+.status-rows { display:flex; flex-direction:column; gap:6px; margin-top:5px; }
+.status-row  { display:flex; align-items:center; gap:7px; }
+.sdot-sm {
+  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+}
+.sdot-sm.on  { background:var(--success); box-shadow:0 0 7px rgba(var(--success-rgb),.9); animation:sdotPulse 3s ease-in-out infinite; }
+.sdot-sm.off { background:#E24B4A; box-shadow:0 0 7px rgba(226,75,74,.9); }
+.status-lbl  { font-size:7.5px; letter-spacing:1.8px; color:rgba(var(--success-rgb),.68); }
+.status-lbl.off { color:rgba(226,75,74,.58); }
+
+/* ─── NEWS TICKER ─── */
+#ticker {
+  position:fixed; bottom:80px; left:0; right:0;
+  height:26px; z-index:18;
+  background:rgba(1,5,18,.97);
+  border-top:1px solid rgba(var(--ac),.1);
+  border-bottom:1px solid rgba(var(--ac),.05);
+  overflow:hidden;
+  display:flex; align-items:center;
+}
+#ticker::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0; width:40px; z-index:2;
+  background:linear-gradient(to right, rgba(1,5,18,1), transparent);
+  pointer-events:none;
+}
+#ticker::after {
+  content:'';
+  position:absolute; right:0; top:0; bottom:0; width:40px; z-index:2;
+  background:linear-gradient(to left, rgba(1,5,18,1), transparent);
+  pointer-events:none;
+}
+#ticker-track {
+  display:inline-block;
+  white-space:nowrap;
+  animation:ticker-scroll 60s linear infinite;
+  font-family:'Orbitron',monospace;
+  font-size:7.5px; letter-spacing:2.5px;
+  color:rgba(var(--ac),.45);
+  padding-left:60px;
+}
+@keyframes ticker-scroll {
+  from { transform:translateX(0); }
+  to   { transform:translateX(-50%); }
+}
+
+/* ─── CLAUDE CHAT PANEL (right drawer) ─── */
+#chat-toggle {
+  position:fixed; top:50%; right:0; transform:translateY(-50%);
+  width:22px; height:52px; z-index:16;
+  background:rgba(4,18,42,.92); border:1px solid rgba(var(--ac),.12); border-right:none;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:rgba(var(--ac),.36); font-size:13px;
+  transition:color .2s, right .35s cubic-bezier(.22,1,.36,1);
+  opacity:0; animation:cFade .6s ease forwards 3.2s;
+}
+#chat-toggle.open { right:310px; }
+#chat-toggle:hover { color:var(--accent); background:rgba(4,28,60,.95); }
+#chat-panel {
+  position:fixed; top:0; right:0; bottom:106px;
+  width:310px; z-index:15;
+  background:rgba(2,6,18,.97);
+  border-left:1px solid rgba(var(--ac),.1);
+  backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+  display:flex; flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .35s cubic-bezier(.22,1,.36,1);
+}
+#chat-panel.open { transform:translateX(0); }
+#chat-hd {
+  padding:12px 14px 10px; flex-shrink:0;
+  border-bottom:1px solid rgba(var(--ac),.07);
+  font-size:7px; letter-spacing:3px; color:rgba(var(--ac),.32);
+}
+#chat-msgs {
+  flex:1; overflow-y:auto; padding:12px 13px;
+  display:flex; flex-direction:column; gap:10px;
+}
+#chat-msgs::-webkit-scrollbar { width:3px; }
+#chat-msgs::-webkit-scrollbar-thumb { background:rgba(var(--ac),.14); border-radius:2px; }
+.chat-msg {
+  font-family:'SF Mono','Fira Code','Courier New',monospace;
+  font-size:10px; line-height:1.72; word-break:break-word;
+}
+.chat-msg-u { color:rgba(var(--ac),.62); }
+.chat-msg-u::before { content:'›  '; color:rgba(var(--ac),.28); }
+.chat-msg-j { color:rgba(180,235,255,.72); }
+.chat-msg-j::before { content:'◈  '; color:rgba(var(--ac),.32); }
+.chat-thinking {
+  font-family:'Orbitron',monospace; font-size:6.5px; letter-spacing:2px;
+  color:rgba(var(--ac),.28); padding:4px 13px; display:none;
+  animation:sdotPulse 1s ease-in-out infinite;
+}
+.chat-thinking.visible { display:block; }
+#chat-inp-row { display:flex; border-top:1px solid rgba(var(--ac),.08); flex-shrink:0; }
+#chat-inp {
+  flex:1; background:transparent; border:none; outline:none;
+  padding:10px 11px; font-family:'Orbitron',monospace;
+  font-size:9px; letter-spacing:1.5px; color:var(--accent);
+  caret-color:rgba(var(--ac),.9); user-select:text;
+}
+#chat-inp::placeholder { color:rgba(var(--ac),.15); }
+#chat-send {
+  background:none; border:none; border-left:1px solid rgba(var(--ac),.08);
+  color:rgba(var(--ac),.28); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:0 13px; cursor:pointer;
+  transition:color .2s, background .2s;
+}
+#chat-send:hover { color:var(--accent); background:rgba(var(--ac),.04); }
+#app { transition:padding-right .35s cubic-bezier(.22,1,.36,1); }
+
 </style>
 </head>
 <body>
+
+<!-- Ambient FX layers (drifting grid + scanlines) -->
+<div id="fx-grid"></div>
+<div id="fx-scan"></div>
 
 <!-- Boot sequence overlay -->
 <div id="boot-overlay">
@@ -549,10 +1013,11 @@ body::before {
 <!-- Main app -->
 <div id="app">
 
-  <!-- TOP: Clock -->
+  <!-- TOP: Clock + timetable strip -->
   <div id="top">
     <div id="clock">00:00:00</div>
     <div id="date-line">LOADING…</div>
+    <div id="tt-strip"><div class="tt-strip-inner" id="tt-strip-inner"></div></div>
   </div>
 
   <!-- MIDDLE: Panels + Neural Network -->
@@ -568,7 +1033,7 @@ body::before {
         </div>
         <div class="iblock-dot"></div>
       </div>
-      <div class="iblock">
+      <div class="iblock iblock-streak">
         <div class="iblock-content">
           <div class="ilabel">STUDY STREAK</div>
           <div class="ival" id="streak-val">-- DAYS</div>
@@ -576,10 +1041,33 @@ body::before {
         </div>
         <div class="iblock-dot"></div>
       </div>
+      <div class="iblock iblock-wc" id="wc-block" onclick="window.open('/worldcup-schedule','_blank')" style="cursor:pointer" title="Open full World Cup schedule">
+        <div class="iblock-content">
+          <div class="ilabel">WORLD CUP ▸</div>
+          <div class="ival" id="wc-val">—</div>
+          <div class="isub" id="wc-sub">LOADING…</div>
+        </div>
+        <div class="iblock-dot"></div>
+      </div>
+      <div class="iblock iblock-spotify">
+        <div class="iblock-content">
+          <div class="ilabel">NOW PLAYING</div>
+          <div class="ival" id="sp-track">—</div>
+          <div class="isub" id="sp-artist">SPOTIFY</div>
+          <div class="spotify-controls">
+            <button class="sp-btn" onclick="spotifyControl('prev')" title="Previous">⏮</button>
+            <button class="sp-btn" id="sp-pp" onclick="spotifyTogglePlay()" title="Play/Pause">▷</button>
+            <button class="sp-btn" onclick="spotifyControl('next')" title="Next">⏭</button>
+          </div>
+          <button id="spotify-connect-btn" onclick="spotifyConnect()">CONNECT SPOTIFY</button>
+        </div>
+        <img id="spotify-art" class="hidden" src="" alt="">
+      </div>
     </div>
 
     <!-- Center: Neural Network -->
     <div id="circle-wrap">
+      <div id="reactor-ring"></div>
       <div class="c-glow"></div>
       <!-- legacy hidden elements — JS checks for these; null check in place -->
       <div class="c-core"></div>
@@ -597,7 +1085,7 @@ body::before {
 
     <!-- Right panels -->
     <div class="panels panel-right">
-      <div class="iblock">
+      <div class="iblock iblock-exam">
         <div class="iblock-content">
           <div class="ilabel">NEXT EXAM</div>
           <div class="ival" id="exam-val">-- DAYS</div>
@@ -605,11 +1093,44 @@ body::before {
         </div>
         <div class="iblock-dot"></div>
       </div>
-      <div class="iblock">
+      <div class="iblock iblock-tasks">
         <div class="iblock-content">
           <div class="ilabel">PENDING TASKS</div>
           <div class="ival" id="hw-val">--</div>
           <div class="isub" id="hw-sub">HOMEWORK</div>
+        </div>
+        <div class="iblock-dot"></div>
+      </div>
+      <div class="iblock iblock-agenda">
+        <div class="iblock-content">
+          <div class="ilabel">TODAY'S AGENDA</div>
+          <div class="agenda-list" id="agenda-list">
+            <span class="agenda-empty">LOADING…</span>
+          </div>
+        </div>
+        <div class="iblock-dot"></div>
+      </div>
+      <div class="iblock iblock-sysstat">
+        <div class="iblock-content">
+          <div class="ilabel">SYSTEM STATUS</div>
+          <div class="status-rows">
+            <div class="status-row">
+              <div class="sdot-sm on" id="ss-server"></div>
+              <span class="status-lbl" id="ss-server-lbl">SERVER ONLINE</span>
+            </div>
+            <div class="status-row">
+              <div class="sdot-sm on" id="ss-hub"></div>
+              <span class="status-lbl" id="ss-hub-lbl">STUDYHUB SYNCED</span>
+            </div>
+            <div class="status-row">
+              <div class="sdot-sm off" id="ss-weather"></div>
+              <span class="status-lbl off" id="ss-weather-lbl">WEATHER LIVE</span>
+            </div>
+            <div class="status-row">
+              <div class="sdot-sm on" id="ss-voice"></div>
+              <span class="status-lbl" id="ss-voice-lbl">VOICE READY</span>
+            </div>
+          </div>
         </div>
         <div class="iblock-dot"></div>
       </div>
@@ -622,7 +1143,13 @@ body::before {
 
 </div><!-- /app -->
 
+<!-- News ticker -->
+<div id="ticker">
+  <div id="ticker-track">JARVIS  ·  ONLINE  ·  ALL SYSTEMS READY  ·  JARVIS  ·  ONLINE  ·  ALL SYSTEMS READY  ·  </div>
+</div>
+
 <!-- Bottom command bar -->
+<div id="file-chips"></div>
 <div id="cmd-bar">
   <div class="cmd-side">
     <div class="cmd-s-dot"></div>
@@ -633,8 +1160,11 @@ body::before {
       <input id="jarvis-inp" type="text"
         placeholder="TELL JARVIS SOMETHING…"
         autocomplete="off" spellcheck="false"/>
+      <input type="file" id="file-attach" multiple style="display:none" onchange="handleFileAttach(this)">
+      <label for="file-attach" id="attach-btn" title="Attach files">📎</label>
       <button id="mic-btn" onclick="toggleMic()" title="Click or say Hey Jarvis">MIC</button>
       <button id="send-btn" onclick="submitQuery()">SEND</button>
+      <button id="agent-btn" onclick="openClaudeAgent()" title="Open Claude agent">⬡ AGENT</button>
     </div>
   </div>
   <div class="cmd-side cmd-side-right">
@@ -645,6 +1175,39 @@ body::before {
 
 <!-- Mute toggle -->
 <button id="mute-btn" onclick="toggleMute()">♪ VOICE ON</button>
+<button id="wake-btn" onclick="toggleWake()" title="Toggle 'Hey Jarvis' wake word">◉ WAKE ON</button>
+
+<!-- Study Timer -->
+<div id="study-timer" onclick="timerClick(event)" title="Click: start/pause · Double-click: reset">
+  <svg viewBox="0 0 120 120">
+    <circle class="st-bg" cx="60" cy="60" r="50"/>
+    <circle class="st-ring" id="st-ring" cx="60" cy="60" r="50"/>
+  </svg>
+  <div id="st-center">
+    <span id="st-time">25:00</span>
+    <span id="st-label">POMODORO</span>
+    <span id="st-session">CLICK START</span>
+  </div>
+  <span id="st-hint">DBL·RESET</span>
+</div>
+
+<!-- Chat toggle tab -->
+<div id="chat-toggle" onclick="toggleChat()">‹</div>
+
+<!-- Claude Chat Panel -->
+<div id="chat-panel">
+  <div id="chat-hd">CLAUDE · CHAT</div>
+  <div id="chat-msgs">
+    <div class="chat-msg chat-msg-j">Hello. Ask me anything.</div>
+  </div>
+  <div class="chat-thinking" id="chat-thinking">THINKING…</div>
+  <div id="chat-inp-row">
+    <input id="chat-inp" type="text" placeholder="ASK CLAUDE…"
+      autocomplete="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter') sendChat()"/>
+    <button id="chat-send" onclick="sendChat()">SEND</button>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
      BOOT SEQUENCE
@@ -840,8 +1403,8 @@ body::before {
         vx:     (Math.random() - 0.5) * MAX_SPEED * 1.6,
         vy:     (Math.random() - 0.5) * MAX_SPEED * 1.6,
         radius: 2 + Math.random() * 1,      // 2–3 px dot
-        // 60% cyan, 27% purple, 13% white
-        color:  rnd < 0.60 ? 0 : (rnd < 0.87 ? 1 : 2),
+        // 25% cyan, 25% purple, 22% green, 15% white, 13% pink
+        color:  rnd < 0.25 ? 0 : rnd < 0.50 ? 1 : rnd < 0.72 ? 2 : rnd < 0.87 ? 3 : 4,
         lit:    false,   // true while a pulse originates here
         litT:   0,
       });
@@ -952,7 +1515,14 @@ body::before {
         const alpha  = Math.min(1, (0.30 + t * 0.30) * bright);
         const lw     = 0.5 + t * 0.5 + voiceEnergy * 0.4;
 
-        // Choose color from state or node types
+        // Choose color from state or per-connection palette
+        const CONN_PAL = [
+          [0, 212, 255],    // 0 cyan
+          [139, 92, 246],   // 1 purple
+          [0, 255, 136],    // 2 green
+          [200, 220, 255],  // 3 white
+          [255, 107, 157],  // 4 pink
+        ];
         let cr, cg, cb;
         if (state === 'listening') {
           cr = 255; cg = 70;  cb = 70;
@@ -960,12 +1530,9 @@ body::before {
           cr = 40;  cg = 220; cb = 140;
         } else if (state === 'processing') {
           cr = 100; cg = 180; cb = 255;
-        } else if (a.color === 1 || b.color === 1) {
-          cr = 139; cg = 0;   cb = 255;   // purple
-        } else if (a.color === 2 || b.color === 2) {
-          cr = 180; cg = 205; cb = 255;   // white-blue
         } else {
-          cr = 0;   cg = 255; cb = 255;   // cyan
+          const col = CONN_PAL[a.color] || CONN_PAL[0];
+          [cr, cg, cb] = col;
         }
 
         // Glow pass — wide, very transparent
@@ -1000,13 +1567,21 @@ body::before {
       const fade = Math.sin(p.t * Math.PI);   // smooth 0→1→0 envelope
 
       // Pulse color matches line color logic
+      const PULSE_PAL = [
+        [0, 212, 255],    // 0 cyan
+        [180, 80, 255],   // 1 purple (brighter for pulse)
+        [0, 255, 136],    // 2 green
+        [210, 230, 255],  // 3 white
+        [255, 107, 157],  // 4 pink
+      ];
       let pr2, pg2, pb2;
       if (state === 'listening')       { pr2=255; pg2=100; pb2=100; }
       else if (state === 'processing') { pr2=140; pg2=200; pb2=255; }
       else if (state === 'speaking')   { pr2=60;  pg2=230; pb2=160; }
-      else if (p.color === 1)          { pr2=180; pg2=80;  pb2=255; }
-      else if (p.color === 2)          { pr2=200; pg2=220; pb2=255; }
-      else                             { pr2=0;   pg2=255; pb2=255; }
+      else {
+        const pc = PULSE_PAL[p.color] || PULSE_PAL[0];
+        [pr2, pg2, pb2] = pc;
+      }
 
       // Outer glow halo (radial gradient)
       const grd = ctx.createRadialGradient(px, py, 0, px, py, 10);
@@ -1030,13 +1605,21 @@ body::before {
     for (const n of nodes) {
       const litBoost = n.lit ? (1 - n.litT / 18) : 0;
 
+      const NODE_PAL = [
+        [0, 212, 255],    // 0 cyan
+        [160, 80, 255],   // 1 purple
+        [0, 240, 120],    // 2 green
+        [200, 220, 255],  // 3 white
+        [255, 100, 150],  // 4 pink
+      ];
       let nr, ng, nb;
       if (state === 'listening')       { nr=255; ng=80;  nb=80; }
       else if (state === 'speaking')   { nr=40;  ng=200; nb=130; }
       else if (state === 'processing') { nr=80;  ng=170; nb=255; }
-      else if (n.color === 1)          { nr=160; ng=60;  nb=255; }
-      else if (n.color === 2)          { nr=200; ng=220; nb=255; }
-      else                             { nr=0;   ng=212; nb=255; }
+      else {
+        const nc = NODE_PAL[n.color] || NODE_PAL[0];
+        [nr, ng, nb] = nc;
+      }
 
       // Small ambient glow around node (only 3× radius, not 5×)
       if (litBoost > 0.05) {
@@ -1158,7 +1741,7 @@ async function fetchWeather() {
     const temp   = Math.round(d.current.temperature_2m);
     const feels  = Math.round(d.current.apparent_temperature);
     const code   = d.current.weather_code;
-    document.getElementById('w-temp').textContent = `${temp}°C`;
+    animateCounter(document.getElementById('w-temp'), temp, { suffix: '°C' });
     document.getElementById('w-desc').textContent =
       `${WMO[code] || 'WEATHER DATA'} · FEELS ${feels}°`;
   } catch {
@@ -1168,13 +1751,62 @@ async function fetchWeather() {
 fetchWeather();
 setInterval(fetchWeather, 10 * 60 * 1000);
 
-// ─── STUDYHUB DATA ────────────────────────────────────────────────────────────
-function loadHub() {
-  try { return JSON.parse(localStorage.getItem('sh_v4') || 'null'); } catch { return null; }
+// ─── SERVER CONFIG ────────────────────────────────────────────────────────────
+const SERVER = 'http://localhost:3000';
+
+// ─── STUDYHUB DATA (from synced server) ──────────────────────────────────────
+let HUB = null;   // last-known full StudyHub state (timetable, homework, exams…)
+
+async function fetchHub() {
+  try {
+    const r = await fetch(`${SERVER}/data`, { signal: AbortSignal.timeout(2500) });
+    if (!r.ok) throw new Error('bad status');
+    const data = await r.json();
+    if (data && typeof data === 'object' && Object.keys(data).length) HUB = data;
+  } catch { /* server unreachable — keep last-known HUB */ }
+  return HUB;
 }
 
-function refreshData() {
-  const S = loadHub();
+function subjName(id) {
+  const f = (HUB?.settings?.subjects || []).find(s => s.id === id);
+  return f?.name || id || '';
+}
+function mins(t) {                       // "HH:MM" → minutes since midnight (-1 if blank)
+  if (!t || !/^\d{1,2}:\d{2}$/.test(t)) return -1;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+function dateOffset(n) {                  // YYYY-MM-DD n days from today
+  const d = new Date(); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// Animate a numeric readout counting up/down to a target value.
+// Stores last value on the element so re-renders animate from where they were.
+function animateCounter(el, target, { prefix = '', suffix = '', dur = 650 } = {}) {
+  if (!el) return;
+  if (typeof target !== 'number' || !isFinite(target)) {   // non-numeric → set directly
+    el.textContent = `${prefix}${target}${suffix}`;
+    delete el.dataset.cv;
+    return;
+  }
+  const from = parseInt(el.dataset.cv ?? '', 10);
+  const start = isFinite(from) ? from : 0;                 // first paint counts up from 0
+  if (start === target) { el.textContent = `${prefix}${target}${suffix}`; el.dataset.cv = target; return; }
+  const t0 = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);                  // easeOutCubic
+    const cur = Math.round(start + (target - start) * eased);
+    el.textContent = `${prefix}${cur}${suffix}`;
+    if (p < 1) requestAnimationFrame(step);
+    else { el.textContent = `${prefix}${target}${suffix}`; el.dataset.cv = String(target); }
+  }
+  requestAnimationFrame(step);
+}
+
+async function refreshData() {
+  const S = await fetchHub();
   const td = todayStr();
 
   // Homework
@@ -1191,6 +1823,8 @@ function refreshData() {
   }
 
   // Next exam
+  const examBlock = document.querySelector('.iblock-exam');
+  const examValEl = document.getElementById('exam-val');
   if (S && Array.isArray(S.exams)) {
     const upcoming = S.exams
       .filter(e => e.date >= td)
@@ -1198,39 +1832,104 @@ function refreshData() {
     if (upcoming.length) {
       const nx    = upcoming[0];
       const diff  = Math.round((new Date(nx.date+'T00:00:00') - new Date(td+'T00:00:00')) / 86400000);
-      const subs  = S.settings?.subjects || [];
-      const found = subs.find(s => s.id === nx.subjectId);
-      const name  = (found?.name || nx.subjectId || 'EXAM').toUpperCase();
-      document.getElementById('exam-val').textContent = diff === 0 ? 'TODAY' : `${diff} DAYS`;
-      document.getElementById('exam-sub').textContent = name;
+      if (diff === 0) {
+        examValEl.textContent = 'TODAY';
+        delete examValEl.dataset.cv;
+      } else {
+        animateCounter(examValEl, diff, { suffix: ' DAYS' });
+      }
+      document.getElementById('exam-sub').textContent = (subjName(nx.subjectId) || 'EXAM').toUpperCase();
+      // Alert: nearest exam less than 24h away (date-only data ⇒ "today")
+      examBlock && examBlock.classList.toggle('exam-urgent', diff === 0);
     } else {
-      document.getElementById('exam-val').textContent = 'NONE';
+      examValEl.textContent = 'NONE';
+      delete examValEl.dataset.cv;
       document.getElementById('exam-sub').textContent = 'NO EXAMS SCHEDULED';
+      examBlock && examBlock.classList.remove('exam-urgent');
     }
   } else {
-    document.getElementById('exam-val').textContent = '--';
+    examValEl.textContent = '--';
+    delete examValEl.dataset.cv;
     document.getElementById('exam-sub').textContent = 'NO DATA';
+    examBlock && examBlock.classList.remove('exam-urgent');
   }
 
-  // Streak
+  // Streak (local-only, not part of server data)
   try {
     const st = JSON.parse(localStorage.getItem('sh_streak') || '{}');
     const cnt = st.count || 0;
-    document.getElementById('streak-val').textContent = `${cnt} DAY${cnt !== 1 ? 'S' : ''}`;
+    animateCounter(document.getElementById('streak-val'), cnt, { suffix: ` DAY${cnt !== 1 ? 'S' : ''}` });
     document.getElementById('streak-sub').textContent =
       cnt >= 30 ? 'LEGENDARY 🔥' :
       cnt >= 14 ? 'ON FIRE 🔥' :
       cnt >= 7  ? 'STREAK ACTIVE' :
       cnt >= 1  ? 'KEEP GOING' : 'START TODAY';
   } catch { /* no streak data yet */ }
+
+  renderTimetableStrip();
+  renderAgendaPanel();
+  renderSystemStatus();
+  renderTicker();
 }
 
 refreshData();
 setInterval(refreshData, 30 * 1000);
 window.addEventListener('focus', refreshData);
 
-// ─── SERVER CONFIG ────────────────────────────────────────────────────────────
-const SERVER = 'http://localhost:3000';
+// ─── WORLD CUP PANEL ──────────────────────────────────────────────────────────
+const WC_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function wcDate(ds) {
+  if (!ds) return '';
+  const [, mo, da] = ds.split('-').map(Number);
+  return da + ' ' + WC_MONTHS[mo - 1];
+}
+
+async function refreshWorldCup() {
+  const valEl = document.getElementById('wc-val');
+  const subEl = document.getElementById('wc-sub');
+  const block = document.getElementById('wc-block');
+  if (!valEl || !subEl) return;
+  try {
+    const r = await fetch(`${SERVER}/worldcup`, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error('bad');
+    const d = await r.json();
+
+    const live = ['IN_PLAY', 'PAUSED'];
+    const spainToday = (d.today || []).find(m => m.isSpain);
+
+    if (spainToday && (live.includes(spainToday.status) || spainToday.status === 'FINISHED')) {
+      // Live or finished today — show the score
+      const sh = spainToday.scoreHome ?? 0, sa = spainToday.scoreAway ?? 0;
+      valEl.textContent = `${spainToday.home} ${sh}–${sa} ${spainToday.away}`;
+      const isLive = live.includes(spainToday.status);
+      const minStr = isLive && spainToday.minute != null ? ` ${spainToday.minute}\'` : '';
+      subEl.textContent = isLive ? `LIVE${minStr}` : 'FULL TIME';
+      block && block.classList.toggle('wc-live', isLive);
+    } else if (spainToday) {
+      // Spain plays today, not yet kicked off
+      const opp = spainToday.home === 'ESP' ? spainToday.away : spainToday.home;
+      valEl.textContent = 'ESP vs ' + opp;
+      subEl.textContent = 'TODAY · ' + spainToday.kickoff;
+      block && block.classList.remove('wc-live');
+    } else if (d.spainNext) {
+      const opp = d.spainNext.opponentTla || (d.spainNext.opponent || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+      valEl.textContent = 'ESP vs ' + (opp || 'TBD');
+      subEl.textContent = wcDate(d.spainNext.date) + ' · ' + d.spainNext.kickoff;
+      block && block.classList.remove('wc-live');
+    } else {
+      valEl.textContent = '—';
+      subEl.textContent = 'NO FIXTURES';
+      block && block.classList.remove('wc-live');
+    }
+  } catch {
+    valEl.textContent = '—';
+    subEl.textContent = 'OFFLINE';
+    block && block.classList.remove('wc-live');
+  }
+}
+
+refreshWorldCup().then(() => renderTicker());
+setInterval(() => refreshWorldCup().then(() => renderTicker()), 60 * 1000);   // refresh every 60s (server caches 5 min)
 
 // ─── STATUS INDICATOR ────────────────────────────────────────────────────────
 function setStatus(state, label) {
@@ -1285,10 +1984,82 @@ function setProcessing(on) {
   }
 }
 
+function openClaudeAgent() {
+  const btn = document.getElementById('agent-btn');
+  btn.textContent = '⬡ …';
+  fetch(`${SERVER}/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command: 'open claude' }),
+  }).finally(() => {
+    setTimeout(() => { btn.textContent = '⬡ AGENT'; }, 1200);
+  });
+}
+
+let attachedFiles = [];
+
+function handleFileAttach(input) {
+  for (const file of input.files) {
+    console.log('File selected:', file.name, 'size:', file.size);
+    attachedFiles.push(file);
+  }
+  input.value = ''; // reset so the same file can be re-selected
+  renderFileChips();
+}
+
+function renderFileChips() {
+  const chips = document.getElementById('file-chips');
+  chips.innerHTML = '';
+  attachedFiles.forEach((file, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'file-chip';
+    chip.innerHTML = `📎 ${file.name} <span class="file-chip-x" onclick="removeAttach(${i})">✕</span>`;
+    chips.appendChild(chip);
+  });
+}
+
+function removeAttach(i) {
+  attachedFiles.splice(i, 1);
+  renderFileChips();
+}
+
 async function submitQuery() {
   const inp = document.getElementById('jarvis-inp');
-  const msg = inp.value.trim();
+  let msg = inp.value.trim();
   if (!msg) { inp.focus(); return; }
+
+  // Upload any attached files first
+  if (attachedFiles.length > 0) {
+    console.log('SERVER URL:', SERVER);
+    const attachedPaths = [];
+    for (const file of attachedFiles) {
+      console.log('Starting file upload for:', file.name, 'size:', file.size);
+      try {
+        const base64 = await new Promise((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result.split(',')[1]);
+          fr.onerror = rej;
+          fr.readAsDataURL(file);
+        });
+        console.log('Base64 ready, length:', base64.length, '— posting to', `${SERVER}/upload`);
+        const ur = await fetch(`${SERVER}/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, data: base64 }),
+        });
+        console.log('Upload response status:', ur.status);
+        const ud = await ur.json();
+        console.log('Upload response body:', ud);
+        if (ud.success) attachedPaths.push(`${file.name} → ${ud.path}`);
+        else console.error('Upload failed:', ud.error);
+      } catch (uploadErr) {
+        console.error('Upload error for', file.name, ':', uploadErr);
+      }
+    }
+    if (attachedPaths.length) msg = `[Attached: ${attachedPaths.join(', ')}]\n` + msg;
+    attachedFiles = [];
+    renderFileChips();
+  }
 
   inp.value = '';
   inp.disabled = true;
@@ -1356,7 +2127,14 @@ function showToast(msg) {
 // ─── VOICE SYSTEM ─────────────────────────────────────────────────────────────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-const V = { listening: false, speaking: false, muted: false };
+// Voice TTS defaults OFF; persisted across sessions via localStorage.
+// Wake word defaults ON (existing behavior); also persisted.
+const V = {
+  listening: false, speaking: false,
+  muted: (localStorage.getItem('jarvis_voice') ?? 'off') !== 'on',
+  wake:  (localStorage.getItem('jarvis_wake')  ?? 'on')  === 'on',
+};
+let micBlocked = false;   // true when Chrome mic permission is denied
 let wakeRec   = null;   // continuous background recognizer (wake word)
 let cmdRec    = null;   // one-shot command recognizer
 let audioCtx   = null;
@@ -1459,13 +2237,100 @@ setInterval(() => {
 
 function toggleMute() {
   V.muted = !V.muted;
+  localStorage.setItem('jarvis_voice', V.muted ? 'off' : 'on');
+  syncMuteButton();
+  if (V.muted) window.speechSynthesis.cancel();
+}
+
+// Reflect persisted voice state on the toggle button.
+function syncMuteButton() {
   const btn = document.getElementById('mute-btn');
   if (btn) {
     btn.textContent = V.muted ? '♪ VOICE OFF' : '♪ VOICE ON';
     btn.classList.toggle('muted', V.muted);
   }
-  if (V.muted) window.speechSynthesis.cancel();
 }
+syncMuteButton();
+
+// ── SOUND FX (WebAudio, no files) ────────────────────────────────────────────
+// Short synthesized chimes: 'wake' = rising two-tone, 'ok' = single high note,
+// 'err' = falling low two-tone. Silent when voice is muted or audio unavailable.
+let sfxCtx = null;
+function playChime(kind = 'wake') {
+  if (V.muted) return;
+  try {
+    sfxCtx = sfxCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (sfxCtx.state === 'suspended') sfxCtx.resume();
+    const notes = kind === 'wake' ? [[880, 0], [1318.5, .09]]
+                : kind === 'ok'   ? [[1046.5, 0]]
+                :                   [[220, 0], [185, .12]];
+    for (const [freq, at] of notes) {
+      const o = sfxCtx.createOscillator(), g = sfxCtx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      const t = sfxCtx.currentTime + at;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(.16, t + .02);
+      g.gain.exponentialRampToValueAtTime(.001, t + .22);
+      o.connect(g); g.connect(sfxCtx.destination);
+      o.start(t); o.stop(t + .25);
+    }
+  } catch { /* no audio — chimes are cosmetic */ }
+}
+
+// ── WAKE WORD TOGGLE + MIC STATE UI ──────────────────────────────────────────
+function toggleWake() {
+  if (!SR) { showToast('SPEECH API NOT SUPPORTED — USE CHROME'); return; }
+  if (micBlocked) { showToast('MIC BLOCKED — ALLOW MICROPHONE IN CHROME SITE SETTINGS'); return; }
+  V.wake = !V.wake;
+  localStorage.setItem('jarvis_wake', V.wake ? 'on' : 'off');
+  if (V.wake) startWakeWord(); else stopWakeWord();
+  syncWakeUI();
+}
+
+// Reflect wake/blocked state on the toggle button and the cmd-bar mic label.
+function syncWakeUI() {
+  const btn = document.getElementById('wake-btn');
+  if (btn) {
+    btn.textContent = !SR ? '⊘ NO VOICE' : micBlocked ? '⊘ MIC BLOCKED' : V.wake ? '◉ WAKE ON' : '○ WAKE OFF';
+    btn.classList.toggle('off', !V.wake && !micBlocked && !!SR);
+    btn.classList.toggle('blocked', micBlocked || !SR);
+  }
+  const dot = document.querySelector('#cmd-bar .cmd-s-dot');
+  const txt = document.querySelector('#cmd-bar .cmd-s-txt');
+  if (dot) {
+    dot.classList.toggle('blocked', micBlocked);
+    dot.classList.toggle('off', !V.wake && !micBlocked);
+  }
+  if (txt) {
+    txt.textContent = !SR        ? 'VOICE NOT SUPPORTED — TYPE A COMMAND BELOW'
+                    : micBlocked ? 'MIC BLOCKED — ALLOW IN CHROME SITE SETTINGS'
+                    : V.wake     ? 'MIC · LISTENING FOR HEY JARVIS'
+                    :              'WAKE WORD OFF — CLICK MIC TO TALK';
+  }
+}
+
+// Track Chrome mic permission live: reflects "blocked" in the UI immediately,
+// and auto-recovers (restarts the wake listener) if the user re-allows it.
+if (navigator.permissions?.query) {
+  navigator.permissions.query({ name: 'microphone' }).then(p => {
+    const apply = () => {
+      micBlocked = (p.state === 'denied');
+      syncWakeUI();
+      if (!micBlocked) setTimeout(startWakeWord, 300);
+    };
+    p.onchange = apply;
+    apply();
+  }).catch(() => { syncWakeUI(); });
+} else {
+  syncWakeUI();
+}
+
+// Watchdog: Chrome's recognition can die without firing onend (tab sleep,
+// device switch). Every 15 s, restart the wake listener if it should be
+// running but isn't. No-ops when off, blocked, or mid-conversation.
+setInterval(() => {
+  if (V.wake && !micBlocked && !wakeRec && !V.listening && !V.speaking) startWakeWord();
+}, 15000);
 
 // ── AUDIO VISUALIZATION ───────────────────────────────────────────────────────
 async function startAudioViz() {
@@ -1559,8 +2424,14 @@ function startListening() {
   };
 
   cmdRec.onerror = e => {
-    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+    if (e.error === 'not-allowed') {
+      micBlocked = true;
+      syncWakeUI();
+      showToast('MIC BLOCKED — ALLOW MICROPHONE IN CHROME SITE SETTINGS');
+      playChime('err');
+    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
       showToast('MIC ERROR: ' + e.error.toUpperCase());
+      playChime('err');
     }
     stopListening();
   };
@@ -1599,8 +2470,11 @@ function toggleMic() {
 }
 
 // ── WAKE WORD ─────────────────────────────────────────────────────────────────
+// Common misrecognitions of "Jarvis" so the wake phrase is forgiving.
+const WAKE_RE = /\b(hey\s+)?(jarvis|jervis|jarvas|javis|jarves|jarvys)\b/i;
+
 function startWakeWord() {
-  if (!SR || wakeRec || V.listening || V.speaking) return;
+  if (!SR || !V.wake || micBlocked || wakeRec || V.listening || V.speaking) return;
 
   wakeRec = new SR();
   wakeRec.continuous     = true;
@@ -1610,11 +2484,11 @@ function startWakeWord() {
   wakeRec.onresult = e => {
     const txt = Array.from(e.results)
       .map(r => r[0].transcript)
-      .join(' ')
-      .toLowerCase();
+      .join(' ');
 
-    if (txt.includes('jarvis')) {
+    if (WAKE_RE.test(txt)) {
       stopWakeWord();
+      playChime('wake');
       // Brief flash before listening
       const wrap = document.getElementById('circle-wrap');
       wrap.style.transition = 'transform 0.15s';
@@ -1625,18 +2499,23 @@ function startWakeWord() {
 
   wakeRec.onend = () => {
     wakeRec = null;
-    // Auto-restart unless actively listening/speaking
+    // Auto-restart unless actively listening/speaking (or toggled off)
     if (!V.listening && !V.speaking) setTimeout(startWakeWord, 1000);
   };
 
   wakeRec.onerror = e => {
-    if (e.error === 'not-allowed') return; // mic denied, don't retry
+    if (e.error === 'not-allowed') {        // mic denied — show it, don't retry
+      wakeRec = null;
+      micBlocked = true;
+      syncWakeUI();
+      return;
+    }
     wakeRec = null;
     if (!V.listening && !V.speaking) setTimeout(startWakeWord, 3000);
   };
 
   try { wakeRec.start(); }
-  catch { wakeRec = null; }
+  catch { wakeRec = null; setTimeout(startWakeWord, 3000); }  // races resolve on retry
 }
 
 function stopWakeWord() {
@@ -1655,35 +2534,96 @@ setTimeout(() => {
 }, 3200);
 
 // ─── VOICE GREETING + DAILY BRIEFING ─────────────────────────────────────────
-setTimeout(function () {
-  // Time-of-day greeting
-  const h   = new Date().getHours();
+// Built from the synced StudyHub server data. Concise — empty sections skipped,
+// whole briefing kept under ~25 seconds spoken.
+setTimeout(async function () {
+  const S   = await fetchHub();
+  const now = new Date();
+  const td  = todayStr();
+
+  // Greeting by time of day
+  const h   = now.getHours();
   const tod = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-  const parts = ['Good ' + tod + ', Alex. All systems online.'];
+  const nm  = S?.settings?.name;
+  const name = nm ? nm.charAt(0).toUpperCase() + nm.slice(1) : 'Alex';
+  const parts = ['Good ' + tod + ', ' + name + '.'];
 
-  // Pending tasks — read from DOM (already computed by refreshData)
-  const tasks = parseInt(document.getElementById('hw-val')?.textContent) || 0;
-  parts.push('You have ' + tasks + ' task' + (tasks !== 1 ? 's' : '') + ' pending.');
+  const dayMap   = ['sun','mon','tue','wed','thu','fri','sat'];
+  const dow      = now.getDay();        // 0 Sun … 6 Sat
+  const todayKey = dayMap[dow];         // e.g. "wed"
 
-  // Next exam
-  const examVal = (document.getElementById('exam-val')?.textContent || '').trim();
-  const examSub = (document.getElementById('exam-sub')?.textContent || '').trim().toLowerCase();
-  if (examVal && examVal !== '--' && examVal !== 'NONE' && examVal !== 'NO DATA') {
-    if (examVal === 'TODAY') {
-      parts.push('Your next exam, ' + examSub + ', is today.');
-    } else {
-      const days    = examVal.replace(/\s*DAYS?$/i, '').trim();
-      const dayWord = days === '1' ? 'day' : 'days';
-      parts.push('Your next exam, ' + examSub + ', is in ' + days + ' ' + dayWord + '.');
+  // ── EXAM TODAY (announced first) ────────────────────────────────────────────
+  const examsToday = (S && Array.isArray(S.exams)) ? S.exams.filter(e => e.date === td) : [];
+  examsToday.forEach(e => {
+    const sn = subjName(e.subjectId || e.subject) || 'an';
+    parts.push('You have a ' + sn + ' exam today.');
+  });
+
+  // ── TODAY'S FIRST LESSON (Mon–Fri only; skip weekends / no lessons) ──────────
+  // Day is stored as a lowercase 3-letter key ("mon"…"fri"); also tolerate a
+  // numeric day (1=Mon..5=Fri) by mapping it to the same key.
+  function lessonKey(l) {
+    const d = l.day ?? l.dayOfWeek ?? l.weekday;
+    if (typeof d === 'number') return dayMap[d] || '';
+    return String(d || '').trim().toLowerCase().slice(0, 3);
+  }
+  if (S && Array.isArray(S.timetable) && dow >= 1 && dow <= 5) {
+    const todays = S.timetable
+      .filter(l => lessonKey(l) === todayKey)
+      .sort((a, b) => mins(a.start || a.startTime) - mins(b.start || b.startTime));
+    if (todays.length) {
+      const l = todays[0];
+      const start = l.start || l.startTime;
+      let s = 'Your first lesson is ' + (subjName(l.subjectId || l.subject) || 'a lesson');
+      if (l.teacher) s += ' with ' + l.teacher;
+      if (start)     s += ' at ' + start;
+      if (l.room)    s += ' in room ' + l.room;
+      parts.push(s + '.');
     }
   }
 
-  // Weather — only include if loaded (not the placeholder --)
+  // Homework due today — fall back to tomorrow if nothing today
+  if (S && Array.isArray(S.homework)) {
+    const pending  = S.homework.filter(h => !h.done && !h.archived);
+    const dueToday = pending.filter(h => h.dueDate === td);
+    const dueTmr   = pending.filter(h => h.dueDate === dateOffset(1));
+    const sayTasks = (list, when) => {
+      const titles = list.slice(0, 3).map(h => h.title).filter(Boolean);
+      let t = 'You have ' + list.length + ' task' + (list.length !== 1 ? 's' : '') + ' due ' + when;
+      if (titles.length) t += ': ' + titles.join(', ');
+      parts.push(t + '.');
+    };
+    if (dueToday.length)      sayTasks(dueToday, 'today');
+    else if (dueTmr.length)   sayTasks(dueTmr, 'tomorrow');
+  }
+
+  // Next exam — strictly future (today's exams are already announced above)
+  if (S && Array.isArray(S.exams)) {
+    const upcoming = S.exams
+      .filter(e => e.date > td)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (upcoming.length) {
+      const nx   = upcoming[0];
+      const diff = Math.round((new Date(nx.date+'T00:00:00') - new Date(td+'T00:00:00')) / 86400000);
+      const sn   = subjName(nx.subjectId || nx.subject) || 'an exam';
+      parts.push('Your next exam is ' + sn + ' in ' + diff + ' day' + (diff !== 1 ? 's' : '') + '.');
+    }
+  }
+
+  // Spain World Cup match today
+  try {
+    const wc = await (await fetch(`${SERVER}/worldcup`, { signal: AbortSignal.timeout(4000) })).json();
+    const sp = (wc.today || []).find(m => m.isSpain);
+    if (sp) {
+      const oppName = sp.opponent || (sp.home === 'ESP' ? sp.away : sp.home);
+      parts.push('And Spain plays ' + oppName + ' tonight at ' + sp.kickoff + '.');
+    }
+  } catch { /* world cup data unavailable — skip */ }
+
+  // Weather — keep the existing temperature line (only if loaded)
   const rawTemp = (document.getElementById('w-temp')?.textContent || '')
     .replace('°C', '').replace('--', '').trim();
-  if (rawTemp) {
-    parts.push('It is currently ' + rawTemp + ' degrees in Zurich.');
-  }
+  if (rawTemp) parts.push('It is currently ' + rawTemp + ' degrees in Zurich.');
 
   const fullText = parts.join(' ');
 
@@ -1693,18 +2633,477 @@ setTimeout(function () {
   if (panel && textEl) {
     textEl.textContent = fullText;
     panel.classList.add('visible');
-    // Auto-fade after 8 s
+    // Auto-fade after 10 s
     setTimeout(() => {
       panel.style.transition = 'opacity .6s ease';
       panel.style.opacity    = '0';
       setTimeout(() => { panel.style.display = 'none'; }, 620);
-    }, 8000);
+    }, 10000);
   }
 
   // Speak — pause wake word first so it doesn't fight the utterance
   if (typeof stopWakeWord === 'function') stopWakeWord();
   if (typeof jarvisSpeak === 'function') jarvisSpeak(fullText);
 }, 3700);
+
+// ═══════════════════════════════════════════════════════════════
+//  AGENDA PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderAgendaPanel() {
+  const el = document.getElementById('agenda-list');
+  if (!el) return;
+  const td = todayStr();
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  const items = [];
+
+  // Today's lessons (up to 4)
+  const lessons = getTodayLessons();
+  lessons.slice(0, 4).forEach(l => {
+    const sn  = (subjName(l.subjectId || l.subject) || 'LESSON').toUpperCase();
+    const st  = l.start || l.startTime || '';
+    const em  = mins(l.end || l.endTime || '');
+    const done = em !== -1 && nowMins > em;
+    items.push({ type:'lesson', text: st ? `${st} ${sn}` : sn, done });
+  });
+
+  // Due homework (up to 3)
+  if (HUB && Array.isArray(HUB.homework)) {
+    HUB.homework
+      .filter(h => !h.done && !h.archived && h.dueDate <= td)
+      .slice(0, 3)
+      .forEach(h => {
+        const sn  = (subjName(h.subjectId || h.subject) || '').toUpperCase();
+        const txt = h.title ? h.title.slice(0, 22).toUpperCase() : (sn ? `${sn} HW` : 'HOMEWORK');
+        items.push({ type:'hw', text:txt, done:false });
+      });
+  }
+
+  if (!items.length) {
+    el.innerHTML = '<span class="agenda-empty">ALL CLEAR TODAY</span>';
+    return;
+  }
+  el.innerHTML = items.map(it =>
+    `<div class="agenda-item ${it.type}${it.done?' done':''}">${it.done?'✓':'›'} ${it.text}</div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SYSTEM STATUS PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderSystemStatus() {
+  const serverOnline = document.querySelector('#status-bar .sdot')?.classList.contains('online') ?? false;
+  const hubSynced    = HUB !== null;
+  const tempText     = document.getElementById('w-temp')?.textContent || '';
+  const weatherLive  = tempText.includes('°C') && !tempText.includes('--');
+  const voiceReady   = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  [
+    { dot:'ss-server',  lbl:'ss-server-lbl',  on:serverOnline },
+    { dot:'ss-hub',     lbl:'ss-hub-lbl',     on:hubSynced    },
+    { dot:'ss-weather', lbl:'ss-weather-lbl', on:weatherLive  },
+    { dot:'ss-voice',   lbl:'ss-voice-lbl',   on:voiceReady   },
+  ].forEach(({ dot, lbl, on }) => {
+    const d = document.getElementById(dot);
+    const l = document.getElementById(lbl);
+    if (d) d.className = `sdot-sm ${on ? 'on' : 'off'}`;
+    if (l) l.className = `status-lbl${on ? '' : ' off'}`;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NEWS TICKER
+// ═══════════════════════════════════════════════════════════════
+function renderTicker() {
+  const track = document.getElementById('ticker-track');
+  if (!track) return;
+
+  const parts = [];
+
+  const wcVal = (document.getElementById('wc-val')?.textContent || '').trim();
+  const wcSub = (document.getElementById('wc-sub')?.textContent || '').trim();
+  if (wcVal && wcVal !== '—') parts.push(`⚽  ${wcVal}  ·  ${wcSub}`);
+
+  const examVal = (document.getElementById('exam-val')?.textContent || '').trim();
+  const examSub = (document.getElementById('exam-sub')?.textContent || '').trim();
+  if (examVal && examVal !== '--' && examSub) parts.push(`NEXT EXAM  ·  ${examSub}  ·  ${examVal}`);
+
+  const temp = (document.getElementById('w-temp')?.textContent || '').trim();
+  const desc = (document.getElementById('w-desc')?.textContent || '').trim();
+  if (temp && !temp.includes('--')) parts.push(`ZÜRICH  ·  ${temp}  ·  ${desc}`);
+
+  const streak = (document.getElementById('streak-val')?.textContent || '').trim();
+  if (streak && !streak.includes('--')) parts.push(`STUDY STREAK  ·  ${streak}`);
+
+  const hw    = (document.getElementById('hw-val')?.textContent || '').trim();
+  const hwSub = (document.getElementById('hw-sub')?.textContent || '').trim();
+  if (hw && hw !== '--') parts.push(`TASKS  ·  ${hw}  ·  ${hwSub}`);
+
+  const sep  = '     ·     ';
+  const text = (parts.length ? parts.join(sep) : 'JARVIS  ·  ONLINE  ·  ALL SYSTEMS READY');
+  const full = text + sep + text + sep;
+
+  if (track.dataset.content === full) return;
+  track.dataset.content = full;
+  track.textContent = full;
+
+  // Duration proportional to content length so scroll speed stays constant
+  const approxPx = full.length * 6.2;
+  track.style.animationDuration = Math.max(25, Math.round(approxPx / 80)) + 's';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FEATURE 4 — TODAY'S TIMETABLE STRIP
+// ═══════════════════════════════════════════════════════════════
+function getTodayLessons() {
+  if (!HUB || !Array.isArray(HUB.timetable)) return [];
+  const dow = new Date().getDay();
+  const dayMap = ['sun','mon','tue','wed','thu','fri','sat'];
+  const todayKey = dayMap[dow];
+  function lkey(l) {
+    const d = l.day ?? l.dayOfWeek ?? l.weekday;
+    if (typeof d === 'number') return dayMap[d] || '';
+    return String(d || '').trim().toLowerCase().slice(0, 3);
+  }
+  return HUB.timetable
+    .filter(l => lkey(l) === todayKey)
+    .sort((a, b) => mins(a.start || a.startTime || '') - mins(b.start || b.startTime || ''));
+}
+
+function renderTimetableStrip() {
+  const strip = document.getElementById('tt-strip-inner');
+  if (!strip) return;
+  const dow = new Date().getDay();
+  if (dow === 0 || dow === 6) {
+    strip.innerHTML = '<span class="tt-strip-empty">NO SCHOOL TODAY</span>';
+    return;
+  }
+  const todays = getTodayLessons();
+  if (!todays.length) {
+    strip.innerHTML = '<span class="tt-strip-empty">NO LESSONS</span>';
+    return;
+  }
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  strip.innerHTML = '';
+  let nextShown = false;
+  todays.forEach(l => {
+    const sn  = (subjName(l.subjectId || l.subject) || 'LESSON').toUpperCase();
+    const st  = l.start || l.startTime || '';
+    const en  = l.end   || l.endTime   || '';
+    const sm  = mins(st), em = mins(en);
+    const isNow  = sm !== -1 && em !== -1 && nowMins >= sm && nowMins < em;
+    const isNext = !nextShown && sm !== -1 && nowMins < sm;
+    if (isNext) nextShown = true;
+    const subj  = (HUB?.settings?.subjects || []).find(s => s.id === (l.subjectId || l.subject));
+    const color = subj?.color || '#00d4ff';
+    const pill  = document.createElement('div');
+    pill.className = 'tt-lesson-pill' + (isNow ? ' now' : '') + (isNext ? ' next' : '');
+    pill.style.setProperty('--pill-color', color);
+    let inner = `<span class="pill-time">${st}</span><span class="pill-name">${sn}</span>`;
+    if (isNext && sm !== -1) {
+      const diff = sm - nowMins;
+      inner += `<span class="pill-countdown">${diff}MIN</span>`;
+    }
+    pill.innerHTML = inner;
+    strip.appendChild(pill);
+  });
+}
+
+setInterval(renderTimetableStrip, 60 * 1000);
+
+// ═══════════════════════════════════════════════════════════════
+//  FEATURE 3 — STUDY TIMER (Pomodoro)
+// ═══════════════════════════════════════════════════════════════
+const POMO_WORK  = 25 * 60;
+const ST_CIRC    = 314.16;   // 2π × r=50
+let timerTotal   = POMO_WORK;
+let timerLeft    = POMO_WORK;
+let timerRunning = false;
+let timerTick_   = null;
+let timerSessions = 0;
+let timerClickT  = null;
+
+function timerSubjectColor() {
+  const sess = document.getElementById('st-session')?.textContent || '';
+  if (!HUB || !sess || sess === 'CLICK START') return '#00d4ff';
+  const subj = (HUB?.settings?.subjects || []).find(s =>
+    (s.name || '').toUpperCase() === sess.toUpperCase());
+  return subj?.color || '#00d4ff';
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerLeft / 60), s = timerLeft % 60;
+  const tEl = document.getElementById('st-time');
+  const lEl = document.getElementById('st-label');
+  const ring = document.getElementById('st-ring');
+  if (tEl) tEl.textContent = `${pad(m)}:${pad(s)}`;
+  if (lEl) lEl.textContent = timerRunning ? 'FOCUS' : (timerLeft === timerTotal ? 'POMODORO' : 'PAUSED');
+  if (ring) {
+    const progress = timerLeft / timerTotal;
+    ring.style.strokeDashoffset = (ST_CIRC * (1 - progress)).toFixed(2);
+    const col = timerRunning ? timerSubjectColor() : 'rgba(0,212,255,.22)';
+    ring.style.stroke = col;
+    ring.style.filter = timerRunning
+      ? `drop-shadow(0 0 5px ${col})`
+      : 'none';
+    ring.classList.toggle('active', timerRunning);
+  }
+}
+
+function startTimer() {
+  if (timerLeft === 0) { timerLeft = timerTotal; }
+  timerRunning = true;
+  clearInterval(timerTick_);
+  timerTick_ = setInterval(() => {
+    timerLeft = Math.max(0, timerLeft - 1);
+    updateTimerDisplay();
+    if (timerLeft === 0) {
+      timerRunning = false;
+      clearInterval(timerTick_);
+      timerSessions++;
+      logStudySession();
+      showToast(`POMODORO DONE · SESSION ${timerSessions}`);
+    }
+  }, 1000);
+  updateTimerDisplay();
+}
+
+function pauseTimer() {
+  timerRunning = false;
+  clearInterval(timerTick_);
+  updateTimerDisplay();
+}
+
+function resetTimer() {
+  pauseTimer();
+  timerLeft = timerTotal;
+  updateTimerDisplay();
+}
+
+function toggleTimer() {
+  if (timerRunning) pauseTimer();
+  else startTimer();
+}
+
+function timerClick(e) {
+  if (timerClickT) {
+    clearTimeout(timerClickT);
+    timerClickT = null;
+    resetTimer();
+  } else {
+    timerClickT = setTimeout(() => { timerClickT = null; toggleTimer(); }, 260);
+  }
+}
+
+function logStudySession() {
+  try {
+    const st    = JSON.parse(localStorage.getItem('sh_streak') || '{"count":0}');
+    const today = todayStr();
+    if (st.lastDate !== today) {
+      st.count = (st.lastDate === dateOffset(-1)) ? (st.count || 0) + 1 : 1;
+      st.lastDate = today;
+      localStorage.setItem('sh_streak', JSON.stringify(st));
+    }
+  } catch {}
+}
+
+updateTimerDisplay();
+
+// ═══════════════════════════════════════════════════════════════
+//  FEATURE 1 — SPOTIFY
+// ═══════════════════════════════════════════════════════════════
+// ── HOW TO SET UP ──────────────────────────────────────────────
+//  1. Go to https://developer.spotify.com/dashboard
+//  2. Create an app, add redirect URI: http://localhost:3000/jarvis
+//  3. Copy the Client ID into SPOTIFY_CLIENT_ID below
+const SPOTIFY_CLIENT_ID = '';   // ← paste your Spotify app client ID here
+const SPOTIFY_REDIRECT  = 'http://localhost:3000/jarvis';
+const SPOTIFY_SCOPE     = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+
+let spToken = null;
+let spPollTimer = null;
+
+async function _sha256(plain) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain));
+  return buf;
+}
+function _b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+function _rand(n = 64) {
+  const a = new Uint8Array(n); crypto.getRandomValues(a); return _b64url(a);
+}
+
+async function spotifyConnect() {
+  if (!SPOTIFY_CLIENT_ID) { showToast('SET SPOTIFY_CLIENT_ID IN JARVIS.HTML'); return; }
+  const verifier  = _rand(64);
+  const challenge = _b64url(await _sha256(verifier));
+  sessionStorage.setItem('sp_verifier', verifier);
+  const p = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID, response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT, code_challenge_method: 'S256',
+    code_challenge: challenge, scope: SPOTIFY_SCOPE,
+  });
+  location.href = 'https://accounts.spotify.com/authorize?' + p;
+}
+
+async function _spExchangeCode(code) {
+  const verifier = sessionStorage.getItem('sp_verifier');
+  if (!verifier) return;
+  const r = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code', code,
+      redirect_uri: SPOTIFY_REDIRECT,
+      client_id: SPOTIFY_CLIENT_ID, code_verifier: verifier,
+    }),
+  });
+  if (!r.ok) return;
+  const d = await r.json();
+  spToken = d.access_token;
+  localStorage.setItem('sp_token', spToken);
+  if (d.refresh_token) localStorage.setItem('sp_refresh', d.refresh_token);
+  sessionStorage.removeItem('sp_verifier');
+  history.replaceState({}, '', '/jarvis');
+}
+
+async function _spRefreshToken() {
+  const rt = localStorage.getItem('sp_refresh');
+  if (!rt || !SPOTIFY_CLIENT_ID) return false;
+  const r = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token', refresh_token: rt, client_id: SPOTIFY_CLIENT_ID,
+    }),
+  });
+  if (!r.ok) return false;
+  const d = await r.json();
+  spToken = d.access_token;
+  localStorage.setItem('sp_token', spToken);
+  if (d.refresh_token) localStorage.setItem('sp_refresh', d.refresh_token);
+  return true;
+}
+
+async function refreshSpotify() {
+  const trackEl   = document.getElementById('sp-track');
+  const artistEl  = document.getElementById('sp-artist');
+  const artEl     = document.getElementById('spotify-art');
+  const ppBtn     = document.getElementById('sp-pp');
+  const connBtn   = document.getElementById('spotify-connect-btn');
+  if (!trackEl) return;
+
+  if (!spToken) spToken = localStorage.getItem('sp_token');
+  if (!spToken) { if (connBtn) connBtn.style.display = 'block'; return; }
+
+  try {
+    const r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { 'Authorization': 'Bearer ' + spToken },
+    });
+    if (r.status === 401) {
+      const ok = await _spRefreshToken();
+      if (ok) { await refreshSpotify(); return; }
+      spToken = null; localStorage.removeItem('sp_token');
+      if (connBtn) connBtn.style.display = 'block'; return;
+    }
+    if (r.status === 204 || !r.ok) {
+      trackEl.textContent = 'NOTHING PLAYING';
+      artistEl.textContent = '—';
+      if (artEl) artEl.classList.add('hidden');
+      if (ppBtn) ppBtn.textContent = '▷';
+      if (connBtn) connBtn.style.display = 'none'; return;
+    }
+    const d = await r.json();
+    if (!d?.item) return;
+    const name   = d.item.name || 'Unknown';
+    const artist = (d.item.artists || []).map(a => a.name).join(', ') || '—';
+    const img    = d.item.album?.images?.[2]?.url || d.item.album?.images?.[0]?.url || '';
+    trackEl.textContent  = name.slice(0, 24) + (name.length > 24 ? '…' : '');
+    artistEl.textContent = artist.slice(0, 22) + (artist.length > 22 ? '…' : '');
+    if (artEl) {
+      if (img) { artEl.src = img; artEl.classList.remove('hidden'); }
+      else artEl.classList.add('hidden');
+    }
+    if (ppBtn) ppBtn.textContent = d.is_playing ? '⏸' : '▷';
+    if (connBtn) connBtn.style.display = 'none';
+  } catch { /* offline — keep last state */ }
+}
+
+async function spotifyControl(action) {
+  if (!spToken) return;
+  const map = {
+    play:  ['PUT',  'https://api.spotify.com/v1/me/player/play'],
+    pause: ['PUT',  'https://api.spotify.com/v1/me/player/pause'],
+    next:  ['POST', 'https://api.spotify.com/v1/me/player/next'],
+    prev:  ['POST', 'https://api.spotify.com/v1/me/player/previous'],
+  };
+  const [method, url] = map[action] || [];
+  if (!url) return;
+  await fetch(url, { method, headers: { 'Authorization': 'Bearer ' + spToken } });
+  setTimeout(refreshSpotify, 600);
+}
+
+async function spotifyTogglePlay() {
+  const pp = document.getElementById('sp-pp');
+  await spotifyControl(pp?.textContent === '⏸' ? 'pause' : 'play');
+}
+
+// Handle OAuth callback + init polling
+(async function spotifyInit() {
+  const code = new URLSearchParams(location.search).get('code');
+  if (code && SPOTIFY_CLIENT_ID) await _spExchangeCode(code);
+  refreshSpotify();
+  spPollTimer = setInterval(refreshSpotify, 5000);
+})();
+
+// ═══════════════════════════════════════════════════════════════
+//  FEATURE 5 — CLAUDE CHAT PANEL
+// ═══════════════════════════════════════════════════════════════
+let chatOpen = false;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-panel').classList.toggle('open', chatOpen);
+  const tog = document.getElementById('chat-toggle');
+  tog.classList.toggle('open', chatOpen);
+  tog.textContent = chatOpen ? '›' : '‹';
+  document.getElementById('app').style.paddingRight = chatOpen ? `${310 + 36}px` : '36px';
+  if (chatOpen) setTimeout(() => document.getElementById('chat-inp')?.focus(), 360);
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chat-inp');
+  const msg = inp?.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  _addChatMsg('u', msg);
+  const think = document.getElementById('chat-thinking');
+  if (think) think.classList.add('visible');
+  try {
+    const r = await fetch(`${SERVER}/command`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: msg }),
+    });
+    const d = await r.json();
+    if (think) think.classList.remove('visible');
+    _addChatMsg('j', d.result || d.error || 'No response');
+  } catch {
+    if (think) think.classList.remove('visible');
+    _addChatMsg('j', 'Server offline.');
+  }
+}
+
+function _addChatMsg(type, text) {
+  const msgs = document.getElementById('chat-msgs');
+  if (!msgs) return;
+  const div = document.createElement('div');
+  div.className = 'chat-msg chat-msg-' + type;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
 </script>
 </body>
 </html>
