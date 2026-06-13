@@ -14,22 +14,24 @@
    --ac is the accent as an R,G,B triplet so alpha variants can be
    derived via rgba(var(--ac), .x). Keep --accent/-bright in sync. */
 :root {
-  --ac: 0,212,255;               /* accent rgb triplet */
-  --accent: #00d4ff;             /* primary accent */
-  --accent-bright: #00eaff;      /* readout highlight */
+  --ac: 94,200,255;              /* accent rgb triplet — icy electric blue */
+  --accent: #5ec8ff;             /* primary accent — lighter icy blue */
+  --accent-bright: #9bdcff;      /* readout highlight — bright ice */
   --warn-rgb: 255,184,64;
   --warn: #FFB840;               /* warning / <72h gold */
   --danger-rgb: 255,68,68;
   --danger: #ff4444;             /* alert / live / <24h red */
   --success-rgb: 16,212,142;
   --success: #10d48e;            /* online / streak green */
-  --bg-0: #010812;               /* page base */
-  --glass: rgba(0,12,32,.58);    /* default panel fill */
+  --bg-0: #02070f;               /* deep navy page base */
+  --glass: rgba(10,20,44,.58);   /* navy panel fill */
 }
 
 html, body {
   width: 100%; height: 100%;
-  background: var(--bg-0);
+  /* deep navy gradient — lighter blue toward the top, near-black navy at the base */
+  background: radial-gradient(ellipse 120% 85% at 50% -12%, #0b1a3a 0%, #061026 42%, var(--bg-0) 100%);
+  background-color: var(--bg-0);
   color: var(--accent);
   font-family: 'Orbitron', monospace;
   overflow: hidden;
@@ -42,10 +44,9 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(ellipse 70% 65% at 50% 50%, rgba(0,80,255,0.17) 0%, transparent 65%),
-    radial-gradient(ellipse 45% 40% at 18% 60%, rgba(168,85,247,0.09) 0%, transparent 50%),
-    radial-gradient(ellipse 45% 40% at 82% 60%, rgba(var(--success-rgb),0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 100% 45% at 50% 100%, rgba(0,55,190,0.14) 0%, transparent 60%);
+    radial-gradient(ellipse 70% 62% at 50% 44%, rgba(40,120,255,0.15) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 50% 0%,  rgba(70,150,255,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 45% at 50% 100%, rgba(18,60,180,0.13) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
   animation: ambPulse 9s ease-in-out infinite;
@@ -86,43 +87,64 @@ body::before {
   to   { transform: translateY(4px); }
 }
 
-/* ─── REACTOR RING (arc-reactor concentric rings around neural core) ─── */
+/* ─── ARC-REACTOR RINGS (hero concentric rings around the core) ───────────────
+   Ring colour follows --ring-rgb, which is tinted per state on #circle-wrap.
+   Four rings: slow solid outer · dashed segment mid · ticked HUD ring · fast inner. */
 #reactor-ring {
-  position: absolute; inset: -26px;
-  border-radius: 50%; pointer-events: none; z-index: 0;
+  position: absolute; inset: -30px;
+  border-radius: 50%; pointer-events: none; z-index: 4;
 }
 #reactor-ring::before, #reactor-ring::after {
   content: ''; position: absolute; border-radius: 50%;
 }
+/* slow OUTER ring — solid thin, crisp, with an outer glow + bright leading arc */
 #reactor-ring::before {
   inset: 0;
-  border: 1.5px solid transparent;
-  border-top-color: rgba(var(--ac),0.55);
-  border-right-color: rgba(var(--ac),0.22);
-  box-shadow: 0 0 22px rgba(var(--ac),0.12), inset 0 0 22px rgba(var(--ac),0.06);
-  animation: reactorSpin 18s linear infinite;
+  border: 2px solid rgba(var(--ring-rgb),0.16);
+  border-top-color: rgba(var(--ring-rgb),0.85);
+  border-right-color: rgba(var(--ring-rgb),0.5);
+  box-shadow: 0 0 30px rgba(var(--ring-rgb),0.22), inset 0 0 26px rgba(var(--ring-rgb),0.07);
+  animation: reactorSpin 46s linear infinite;
 }
+/* DASHED segment ring (mid) — rotates the other way */
 #reactor-ring::after {
-  inset: 16px;
-  border: 1px dashed transparent;
-  border-bottom-color: rgba(var(--ac),0.35);
-  border-left-color: rgba(0,160,255,0.18);
-  animation: reactorSpin 26s linear infinite reverse;
+  inset: 30px;
+  border: 1.5px dashed rgba(var(--ring-rgb),0.40);
+  border-top-color: rgba(var(--ring-rgb),0.62);
+  animation: reactorSpin 30s linear infinite reverse;
 }
 @keyframes reactorSpin { to { transform: rotate(360deg); } }
-/* Pulse faster + brighter while voice / response panel is active */
+
+/* extra rings live as #circle-wrap children so they inherit --ring-rgb */
+.arc-ring { position:absolute; border-radius:50%; pointer-events:none; z-index:4; }
+/* TICKED HUD ring — fine radial notches masked into a thin band near the rim */
+.ar-ticks {
+  inset: 7%;
+  background: repeating-conic-gradient(from 0deg,
+     rgba(var(--ring-rgb),0.55) 0deg 0.5deg, transparent 0.5deg 8deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 11px), #000 calc(50% - 11px) calc(50% - 3px), transparent calc(50% - 3px));
+          mask: radial-gradient(circle, transparent 0 calc(50% - 11px), #000 calc(50% - 11px) calc(50% - 3px), transparent calc(50% - 3px));
+  animation: reactorSpin 120s linear infinite;
+}
+/* thin FAST inner ring with a bright leading arc */
+.ar-fast {
+  inset: 27%;
+  border: 1.5px solid rgba(var(--ring-rgb),0.14);
+  border-top-color: rgba(var(--ring-rgb),0.80);
+  box-shadow: 0 0 16px rgba(var(--ring-rgb),0.16);
+  animation: reactorSpin 11s linear infinite reverse;
+}
+
+/* Pulse faster while voice / response panel is active (colour follows state) */
 body:has(#response-panel.visible) #reactor-ring::before,
 body:has(#mic-btn.listening) #reactor-ring::before,
 body:has(#circle-wrap.speaking) #reactor-ring::before {
-  border-top-color: rgba(var(--ac),0.95);
-  box-shadow: 0 0 34px rgba(var(--ac),0.30), inset 0 0 28px rgba(var(--ac),0.12);
-  animation-duration: 6s;
+  box-shadow: 0 0 40px rgba(var(--ring-rgb),0.34), inset 0 0 30px rgba(var(--ring-rgb),0.13);
+  animation-duration: 14s;
 }
-body:has(#response-panel.visible) #reactor-ring::after,
-body:has(#mic-btn.listening) #reactor-ring::after,
-body:has(#circle-wrap.speaking) #reactor-ring::after {
-  animation-duration: 9s;
-}
+body:has(#response-panel.visible) .ar-fast,
+body:has(#mic-btn.listening) .ar-fast,
+body:has(#circle-wrap.speaking) .ar-fast { animation-duration: 6s; }
 
 /* ─── CORNER BRACKETS ─── */
 .corner {
@@ -139,11 +161,9 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 @keyframes cFade { to {opacity:1;} }
 
 /* ─── TOP LABELS ─── */
-#title-bar {
-  position:fixed; top:18px; left:50%; transform:translateX(-50%);
-  font-size:9px; letter-spacing:12px; color:rgba(var(--ac),.28);
-  z-index:10; opacity:0; animation:cFade .6s ease forwards 2.5s; white-space:nowrap;
-}
+/* Top-center wordmark retired — JARVIS now lives in the top-left clock cluster
+   (#jarvis-mark). Element kept in the DOM (hidden) so no IDs/JS break. */
+#title-bar { display:none; }
 #sys-label {
   position:fixed; top:22px; left:70px;
   font-size:8px; letter-spacing:3px; color:rgba(var(--ac),.22);
@@ -181,25 +201,27 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 }
 
 /* ─── TOP: CLOCK ─── */
+/* Top-left cluster: JARVIS wordmark | small clock + date, read as one unit. */
 #top {
-  text-align:center;
+  position:fixed; top:44px; left:70px; right:auto;
+  display:flex; align-items:center; gap:13px; z-index:10;
   opacity:0; animation:slideDown .9s cubic-bezier(.22,1,.36,1) forwards .5s;
 }
 @keyframes slideDown { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
 
-#clock {
-  font-size:clamp(44px,5.4vw,74px);
-  font-weight:800; letter-spacing:9px; color:var(--accent);
-  text-shadow:0 0 14px rgba(var(--ac),.9),0 0 42px rgba(var(--ac),.4),0 0 90px rgba(0,130,255,.2);
-  animation:clockGlow 2.5s ease-in-out infinite alternate;
+#jarvis-mark {
+  font-size:18px; font-weight:800; letter-spacing:6px; line-height:1;
+  color:rgba(var(--ac),.92); text-shadow:0 0 16px rgba(var(--ac),.5);
+  padding-right:13px; border-right:1px solid rgba(var(--ac),.22);
 }
-@keyframes clockGlow {
-  from{text-shadow:0 0 14px rgba(var(--ac),.9),0 0 42px rgba(var(--ac),.4),0 0 90px rgba(0,130,255,.2);}
-  to  {text-shadow:0 0 20px rgba(var(--ac),1), 0 0 60px rgba(var(--ac),.55),0 0 130px rgba(0,130,255,.3);}
+#clock-stack { display:flex; flex-direction:column; }
+#clock {
+  font-size:17px; font-weight:600; letter-spacing:3px; color:var(--accent);
+  text-shadow:0 0 10px rgba(var(--ac),.45); line-height:1.1;
 }
 #date-line {
-  font-size:11px; font-weight:500; letter-spacing:7px;
-  color:rgba(var(--ac),.45); margin-top:8px;
+  font-size:8px; font-weight:500; letter-spacing:3px;
+  color:rgba(var(--ac),.42); margin-top:2px;
 }
 
 /* ─── MIDDLE ROW ─── */
@@ -218,6 +240,14 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 .panel-right { opacity:0; animation:slideLeft  .9s cubic-bezier(.22,1,.36,1) forwards 1.2s; }
 @keyframes slideRight { from{opacity:0;transform:translateX(-28px);} to{opacity:1;transform:translateX(0);} }
 @keyframes slideLeft  { from{opacity:0;transform:translateX( 28px);} to{opacity:1;transform:translateX(0);} }
+
+/* ─── MINIMAL MODE (default): side panels, ticker & timetable strip hidden.
+     Toggle them back with the ▦ PANELS button (state saved in localStorage). ─── */
+body:not(.show-panels) .panels,
+body:not(.show-panels) #ticker,
+body:not(.show-panels) #tt-strip { display:none; }
+body:not(.show-panels) #middle  { justify-content:center; }
+body:not(.show-panels) #app     { padding-bottom:96px; }
 
 /* ─── BASE PANEL (weather / cyan) ─── */
 .iblock {
@@ -345,6 +375,40 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 #circle-wrap.listening  { box-shadow:0 0 75px rgba(226,74,74,.28), 0 0 140px rgba(180,30,30,.1); }
 #circle-wrap.processing { box-shadow:0 0 75px rgba(80,160,255,.32), 0 0 140px rgba(40,80,255,.12); }
 #circle-wrap.speaking   { box-shadow:0 0 75px rgba(29,158,117,.28), 0 0 140px rgba(0,120,80,.1); }
+/* "waking up" flash when activated by clap or voice phrase */
+#circle-wrap.waking     { box-shadow:0 0 95px rgba(var(--ac),.6), 0 0 180px rgba(var(--ac),.3); }
+
+/* Ring/core tint per state — inherited by #reactor-ring + .arc-* children */
+#circle-wrap            { --ring-rgb: var(--ac); }
+#circle-wrap.listening  { --ring-rgb: var(--danger-rgb); }
+#circle-wrap.processing { --ring-rgb: 80,160,255; }
+#circle-wrap.speaking   { --ring-rgb: var(--success-rgb); }
+
+/* ─── ARC-REACTOR CORE — soft glowing centre, gently pulsing, behind the label ─── */
+.arc-core {
+  position:absolute; top:50%; left:50%;
+  width:clamp(120px,16vw,200px); height:clamp(120px,16vw,200px);
+  transform:translate(-50%,-50%);
+  border-radius:50%; pointer-events:none; z-index:3;
+  background:radial-gradient(circle,
+     rgba(160,242,255,.60) 0%,
+     rgba(var(--ring-rgb),.42) 24%,
+     rgba(var(--ring-rgb),.15) 48%,
+     transparent 72%);
+  filter:blur(3px);
+  animation:arcCorePulse 4.6s ease-in-out infinite;
+}
+@keyframes arcCorePulse {
+  0%,100% { opacity:.6; transform:translate(-50%,-50%) scale(.92); }
+  50%     { opacity:1;  transform:translate(-50%,-50%) scale(1.05); }
+}
+
+/* Respect reduced-motion: stop the spinning/pulsing, keep the look */
+@media (prefers-reduced-motion: reduce) {
+  #reactor-ring::before, #reactor-ring::after,
+  .arc-ring, .arc-core, .c-glow,
+  body::before, #fx-grid, #fx-scan { animation:none !important; }
+}
 
 /* Edge vignette — fades neural canvas to background at circle edge */
 #circle-wrap::after {
@@ -415,51 +479,62 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 /* ─── QUOTE (hidden — replaced by cmd bar) ─── */
 #quote { display:none; }
 
-/* ─── RESPONSE PANEL ─── */
+/* ─── RESPONSE PANEL (docked right, vertically centered) ─── */
 #response-panel {
-  position:fixed; bottom:106px; left:50%;
-  transform:translateX(-50%) translateY(14px);
-  width:min(660px,calc(100vw - 72px));
-  max-height:260px;
-  background:rgba(2,8,24,.66);
-  border:1px solid rgba(var(--ac),.2);
-  border-radius:2px;
+  position:fixed; right:34px; top:50%;
+  transform:translateY(-50%) translateX(46px);
+  width:clamp(330px, 31vw, 480px);
+  max-height:72vh;
+  background:rgba(2,10,28,.62);
+  border:1px solid rgba(var(--ac),.26);
+  border-left:2px solid var(--accent);
+  border-radius:7px;
   overflow:hidden; opacity:0; pointer-events:none;
-  transition:opacity .3s, transform .4s cubic-bezier(.22,1,.36,1);
+  transition:opacity .35s ease, transform .45s cubic-bezier(.22,1,.36,1);
   z-index:30; display:flex; flex-direction:column;
-  backdrop-filter:blur(16px) saturate(1.2); -webkit-backdrop-filter:blur(16px) saturate(1.2);
-  box-shadow:0 18px 50px rgba(0,0,0,.6), 0 6px 18px rgba(0,0,0,.45), 0 0 50px rgba(var(--ac),.16), inset 0 1px 0 rgba(var(--ac),.1);
+  backdrop-filter:blur(18px) saturate(1.25); -webkit-backdrop-filter:blur(18px) saturate(1.25);
+  box-shadow:0 22px 60px rgba(0,0,0,.6), 0 0 60px rgba(var(--ac),.16), inset 0 1px 0 rgba(var(--ac),.1);
 }
-#response-panel.visible { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+#response-panel.visible { opacity:1; transform:translateY(-50%) translateX(0); pointer-events:auto; }
 #response-hd {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:8px 14px;
-  border-bottom:1px solid rgba(var(--ac),.07);
-  flex-shrink:0; gap:12px;
-  background:rgba(var(--ac),.022);
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:14px 16px 10px; gap:12px;
+  border-bottom:1px solid rgba(var(--ac),.10);
+  flex-shrink:0;
 }
 #response-cmd {
-  font-size:6.5px; letter-spacing:2px; color:rgba(var(--ac),.38);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;
+  font-family:'Orbitron',monospace;
+  font-size:10px; letter-spacing:2px; line-height:1.55;
+  color:rgba(var(--ac),.62); text-transform:uppercase;
+  overflow:hidden; flex:1; min-width:0;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
 }
 #response-close {
-  background:none; border:1px solid rgba(var(--ac),.14);
-  color:rgba(var(--ac),.3); font-family:'Orbitron',monospace;
-  font-size:6px; letter-spacing:1.5px;
-  padding:3px 9px; cursor:pointer; flex-shrink:0;
-  transition:border-color .2s,color .2s;
+  background:none; border:1px solid rgba(var(--ac),.2);
+  color:rgba(var(--ac),.45); font-family:'Orbitron',monospace;
+  font-size:13px; line-height:1; width:24px; height:24px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0; border-radius:5px;
+  transition:border-color .2s,color .2s,background .2s;
 }
-#response-close:hover { border-color:rgba(var(--ac),.5); color:var(--accent); }
+#response-close:hover { border-color:rgba(var(--ac),.55); color:var(--accent); background:rgba(var(--ac),.06); }
 #response-body {
-  flex:1; overflow-y:auto; padding:13px 16px;
-  font-family:'SF Mono','Fira Code','Courier New',monospace;
-  font-size:11.5px; line-height:1.8;
-  color:rgba(180,235,255,.82); white-space:pre-wrap; word-break:break-word;
+  flex:1; overflow-y:auto; padding:16px;
+  font-family:'Inter','Segoe UI','SF Pro Text',system-ui,sans-serif;
+  font-size:17px; line-height:1.7;
+  color:rgba(198,238,255,.93); white-space:pre-wrap; word-break:break-word;
 }
-#response-body::-webkit-scrollbar { width:3px; }
+#response-body::-webkit-scrollbar { width:4px; }
 #response-body::-webkit-scrollbar-track { background:transparent; }
-#response-body::-webkit-scrollbar-thumb { background:rgba(var(--ac),.16); border-radius:2px; }
-.r-loading { color:rgba(var(--ac),.5); font-family:'Orbitron',monospace; font-size:9px; letter-spacing:3px; }
+#response-body::-webkit-scrollbar-thumb { background:rgba(var(--ac),.2); border-radius:2px; }
+#response-src {
+  flex-shrink:0; padding:9px 16px 12px;
+  border-top:1px solid rgba(var(--ac),.08);
+  font-family:'Orbitron',monospace; font-size:8.5px; letter-spacing:1.5px;
+  color:rgba(var(--ac),.42);
+}
+#response-src:empty { display:none; }
+.r-loading { color:rgba(var(--ac),.5); font-family:'Orbitron',monospace; font-size:10px; letter-spacing:3px; }
 
 /* ─── TOAST ─── */
 #toast {
@@ -559,6 +634,16 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 }
 #jarvis-inp::placeholder { color:rgba(var(--ac),.25); letter-spacing:2px; }
 
+.conf-badge {
+  flex-shrink:0; font-family:'Orbitron',monospace; font-size:7px;
+  letter-spacing:1px; padding:0 6px; opacity:0; transition:opacity .2s;
+  min-width:30px; text-align:center; pointer-events:none; align-self:center;
+}
+.conf-badge:not(:empty) { opacity:1; }
+.conf-hi  { color:#4dff91; }
+.conf-mid { color:#ffd24d; }
+.conf-lo  { color:#ff6b6b; }
+
 #attach-btn {
   display:flex; align-items:center; justify-content:center;
   border-left:1px solid rgba(var(--ac),.1);
@@ -654,21 +739,117 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 #wake-btn.off { color:rgba(var(--ac),.18); border-color:rgba(var(--ac),.06); }
 #wake-btn.blocked { color:rgba(var(--danger-rgb),.55); border-color:rgba(var(--danger-rgb),.3); cursor:default; }
 
+/* ─── PANELS TOGGLE (show/hide the side widgets) ─── */
+#panels-btn {
+  position:fixed; bottom:222px; right:16px;
+  background:rgba(2,6,18,.92); border:1px solid rgba(var(--ac),.1);
+  color:rgba(var(--ac),.28); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:5px 12px;
+  cursor:pointer; z-index:10; transition:all .2s;
+  opacity:0; animation:cFade .6s ease forwards 4.4s;
+}
+#panels-btn:hover { border-color:rgba(var(--ac),.32); color:rgba(var(--ac),.52); }
+body.show-panels #panels-btn { color:var(--accent); border-color:rgba(var(--ac),.4); }
+
 /* cmd-bar mic dot states */
 .cmd-s-dot.off { background:#555f6e; box-shadow:none; animation:none; }
 .cmd-s-dot.blocked { background:var(--danger); box-shadow:0 0 5px rgba(var(--danger-rgb),.8); animation:none; }
+
+/* ─── VOICE SETTINGS (gear + popover) ─── */
+#vset-btn {
+  position:fixed; bottom:166px; right:16px;
+  background:rgba(2,6,18,.92); border:1px solid rgba(var(--ac),.1);
+  color:rgba(var(--ac),.28); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:5px 12px;
+  cursor:pointer; z-index:10; transition:all .2s;
+  opacity:0; animation:cFade .6s ease forwards 4.2s;
+}
+#vset-btn:hover { border-color:rgba(var(--ac),.32); color:rgba(var(--ac),.52); }
+#vset-panel {
+  position:fixed; bottom:196px; right:16px; width:230px;
+  background:rgba(2,8,24,.97); border:1px solid rgba(var(--ac),.22);
+  border-top:2px solid var(--accent);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  box-shadow:0 14px 40px rgba(0,0,0,.55), 0 0 40px rgba(var(--ac),.12);
+  padding:14px 16px; z-index:40; display:none;
+}
+#vset-panel.open { display:block; animation:cFade .2s ease; }
+.vset-hd { font-size:8px; letter-spacing:3px; color:rgba(var(--ac),.7); margin-bottom:12px; }
+.vset-lbl {
+  display:block; font-size:6.5px; letter-spacing:2px;
+  color:rgba(var(--ac),.45); margin:10px 0 5px;
+}
+#vset-voice {
+  width:100%; background:rgba(0,8,22,.9); border:1px solid rgba(var(--ac),.18);
+  color:var(--accent); font-family:'Orbitron',monospace; font-size:8px;
+  letter-spacing:1px; padding:5px 6px; outline:none;
+}
+#vset-panel input[type=range] { width:100%; accent-color:var(--accent); height:14px; }
+.vset-sep { height:1px; background:rgba(var(--ac),.14); margin:14px 0 4px; }
+.vset-chk {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  font-size:6.5px; letter-spacing:1.5px; color:rgba(var(--ac),.6);
+  margin:9px 0; user-select:none;
+}
+.vset-chk input { accent-color:var(--accent); width:12px; height:12px; cursor:pointer; flex-shrink:0; }
+.vset-row { display:flex; gap:8px; margin-top:14px; }
+.vset-row button {
+  flex:1; background:rgba(var(--ac),.06); border:1px solid rgba(var(--ac),.2);
+  color:rgba(var(--ac),.65); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:6px 0; cursor:pointer; transition:all .2s;
+}
+.vset-row button:hover { background:rgba(var(--ac),.14); color:var(--accent); }
+#vset-lang {
+  width:100%; background:rgba(0,8,22,.9); border:1px solid rgba(var(--ac),.18);
+  color:var(--accent); font-family:'Orbitron',monospace; font-size:8px;
+  letter-spacing:1px; padding:5px 6px; outline:none;
+}
+
+/* ─── VOICE DEBUG LINE + TTS UNLOCK HINT ─── */
+#dbg-btn {
+  position:fixed; bottom:194px; right:16px;
+  background:rgba(2,6,18,.92); border:1px solid rgba(var(--ac),.1);
+  color:rgba(var(--ac),.28); font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:2px; padding:5px 12px;
+  cursor:pointer; z-index:10; transition:all .2s;
+  opacity:0; animation:cFade .6s ease forwards 4.3s;
+}
+#dbg-btn:hover { border-color:rgba(var(--ac),.32); color:rgba(var(--ac),.52); }
+#dbg-line {
+  position:fixed; bottom:110px; left:16px; z-index:45;
+  font-family:'SF Mono','Fira Code',monospace; font-size:10px;
+  letter-spacing:.5px; color:#7fffb0;
+  background:rgba(0,10,4,.92); border:1px solid rgba(0,255,128,.25);
+  padding:5px 10px; max-width:min(620px, calc(100vw - 220px));
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#tts-lock-hint {
+  position:fixed; top:64px; left:50%; transform:translateX(-50%);
+  z-index:60; font-family:'Orbitron',monospace;
+  font-size:9px; letter-spacing:3px; color:var(--warn);
+  background:rgba(24,14,0,.95); border:1px solid rgba(var(--warn-rgb),.4);
+  padding:8px 18px; white-space:nowrap;
+  animation:sdotPulse 1.6s ease-in-out infinite;
+}
 
 /* ─── RESPONSIVE ─── */
 @media (max-height:700px) {
   #app { padding:44px 20px 74px; }
   .panels { gap:8px; }
-  #clock { font-size:clamp(42px,6vw,72px); }
-  #study-timer { width:112px; height:112px; }
 }
 @media (max-width:960px) {
   .panels { width:clamp(180px,18vw,240px); }
   .ival { font-size:clamp(22px,3vw,36px); }
   .cmd-side { display:none; }
+}
+/* Narrow window: response panel drops below the orb, horizontally centered. */
+@media (max-width:900px) {
+  #response-panel {
+    right:auto; left:50%; top:auto; bottom:128px;
+    transform:translateX(-50%) translateY(20px);
+    width:min(560px, calc(100vw - 36px)); max-height:42vh;
+  }
+  #response-panel.visible { transform:translateX(-50%) translateY(0); }
 }
 
 /* ─── BOOT SEQUENCE OVERLAY ─── */
@@ -748,35 +929,45 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 .pill-countdown { font-size:10px; letter-spacing:1.5px; color:rgba(255,180,50,.9); margin-left:4px; font-weight:600; }
 .tt-strip-empty { font-size:10px; letter-spacing:4px; color:rgba(var(--ac),.22); }
 
-/* ─── STUDY TIMER (fixed top-right) ─── */
-#study-timer {
-  position:fixed; top:48px; right:60px;
-  width:148px; height:148px;
+/* ─── TODAY'S WORLD CUP GAMES (fixed top-right; replaces the old timer) ─── */
+#wc-today {
+  position:fixed; top:44px; right:60px;
+  width:236px; max-width:34vw;
+  background:var(--glass);
+  border:1px solid rgba(var(--ac),.18);
+  border-top:2px solid var(--accent);
+  border-radius:6px;
+  padding:9px 13px 11px;
   z-index:10; cursor:pointer; user-select:none;
+  backdrop-filter:blur(12px) saturate(1.2); -webkit-backdrop-filter:blur(12px) saturate(1.2);
+  box-shadow:0 10px 30px rgba(0,0,0,.5), 0 0 26px rgba(var(--ac),.08), inset 0 1px 0 rgba(var(--ac),.08);
   opacity:0; animation:cFade .6s ease forwards 2.2s;
+  transition:border-color .25s, box-shadow .25s, transform .25s;
 }
-#study-timer svg { width:100%; height:100%; transform:rotate(-90deg); overflow:visible; }
-.st-bg   { fill:none; stroke:rgba(var(--ac),.08); stroke-width:6; }
-.st-ring {
-  fill:none; stroke:rgba(var(--ac),.28); stroke-width:6; stroke-linecap:round;
-  stroke-dasharray:314.16; stroke-dashoffset:0;
-  transition:stroke-dashoffset .95s linear, stroke .4s;
+#wc-today:hover {
+  border-color:rgba(var(--ac),.42);
+  box-shadow:0 12px 36px rgba(0,0,0,.55), 0 0 34px rgba(var(--ac),.16), inset 0 1px 0 rgba(var(--ac),.12);
+  transform:translateY(-1px);
 }
-.st-ring.active { stroke:var(--accent); filter:drop-shadow(0 0 8px rgba(var(--ac),.75)); }
-#st-center {
-  position:absolute; inset:0;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  pointer-events:none;
+#wc-today-hd {
+  display:flex; align-items:center; gap:7px;
+  font-size:7px; letter-spacing:3px; color:rgba(var(--ac),.5);
+  margin-bottom:8px;
 }
-#st-time    { font-size:26px; font-weight:800; color:var(--accent-bright);
-  text-shadow:0 0 16px rgba(var(--ac),.85); letter-spacing:2px; }
-#st-label   { font-size:8px; letter-spacing:3px; color:rgba(var(--ac),.45); margin-top:4px; }
-#st-session { font-size:7px; letter-spacing:1.5px; color:rgba(var(--ac),.28); margin-top:3px;
-  max-width:110px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-#st-hint {
-  position:absolute; bottom:-20px; left:50%; transform:translateX(-50%);
-  font-size:7px; letter-spacing:2px; color:rgba(var(--ac),.18); white-space:nowrap;
+#wc-today-hd::after { content:''; flex:1; height:1px; background:rgba(var(--ac),.12); }
+#wc-today-list { display:flex; flex-direction:column; gap:6px; }
+.wc-t-row {
+  display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+  font-size:11px; letter-spacing:.5px; color:rgba(var(--ac),.82);
+  font-variant-numeric:tabular-nums;
 }
+.wc-t-teams { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wc-t-meta  { font-size:9px; letter-spacing:1px; color:rgba(var(--ac),.5); white-space:nowrap; flex-shrink:0; }
+.wc-t-row.wc-t-spain .wc-t-teams { color:var(--warn); text-shadow:0 0 10px rgba(var(--warn-rgb),.4); }
+.wc-t-row.wc-t-live  .wc-t-meta  { color:var(--danger); text-shadow:0 0 8px rgba(var(--danger-rgb),.5); }
+.wc-t-empty { font-size:9.5px; letter-spacing:1.5px; color:rgba(var(--ac),.4); }
+.wc-t-next  { font-size:10px; letter-spacing:.5px; color:rgba(var(--ac),.6); line-height:1.5; }
+.wc-t-next b { color:var(--warn); font-weight:600; }
 
 /* ─── SPOTIFY WIDGET ─── */
 .iblock-spotify {
@@ -998,13 +1189,14 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
   <span id="status-text">CONNECTING</span>
 </div>
 
-<!-- Response panel -->
-<div id="response-panel">
+<!-- Response panel (docked right, vertically centered) -->
+<div id="response-panel" role="dialog" aria-label="Jarvis answer">
   <div id="response-hd">
     <span id="response-cmd"></span>
-    <button id="response-close" onclick="clearResponse()">CLEAR ×</button>
+    <button id="response-close" onclick="clearResponse()" title="Dismiss" aria-label="Close">×</button>
   </div>
   <div id="response-body"></div>
+  <div id="response-src"></div>
 </div>
 
 <!-- Toast -->
@@ -1013,10 +1205,13 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 <!-- Main app -->
 <div id="app">
 
-  <!-- TOP: Clock + timetable strip -->
+  <!-- TOP-LEFT: JARVIS wordmark beside the small clock + date -->
   <div id="top">
-    <div id="clock">00:00:00</div>
-    <div id="date-line">LOADING…</div>
+    <div id="jarvis-mark">JARVIS</div>
+    <div id="clock-stack">
+      <div id="clock">00:00:00</div>
+      <div id="date-line">LOADING…</div>
+    </div>
     <div id="tt-strip"><div class="tt-strip-inner" id="tt-strip-inner"></div></div>
   </div>
 
@@ -1067,7 +1262,11 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 
     <!-- Center: Neural Network -->
     <div id="circle-wrap">
+      <!-- arc-reactor core glow (behind the label) + concentric rings -->
+      <div class="arc-core"></div>
       <div id="reactor-ring"></div>
+      <div class="arc-ring ar-ticks"></div>
+      <div class="arc-ring ar-fast"></div>
       <div class="c-glow"></div>
       <!-- legacy hidden elements — JS checks for these; null check in place -->
       <div class="c-core"></div>
@@ -1160,6 +1359,7 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
       <input id="jarvis-inp" type="text"
         placeholder="TELL JARVIS SOMETHING…"
         autocomplete="off" spellcheck="false"/>
+      <span id="conf-badge" class="conf-badge"></span>
       <input type="file" id="file-attach" multiple style="display:none" onchange="handleFileAttach(this)">
       <label for="file-attach" id="attach-btn" title="Attach files">📎</label>
       <button id="mic-btn" onclick="toggleMic()" title="Click or say Hey Jarvis">MIC</button>
@@ -1176,19 +1376,48 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 <!-- Mute toggle -->
 <button id="mute-btn" onclick="toggleMute()">♪ VOICE ON</button>
 <button id="wake-btn" onclick="toggleWake()" title="Toggle 'Hey Jarvis' wake word">◉ WAKE ON</button>
+<button id="vset-btn" onclick="toggleVset()" title="Voice settings">⚙ VOICE SET</button>
+<button id="panels-btn" onclick="togglePanels()" title="Show/hide side widget panels">▦ PANELS</button>
 
-<!-- Study Timer -->
-<div id="study-timer" onclick="timerClick(event)" title="Click: start/pause · Double-click: reset">
-  <svg viewBox="0 0 120 120">
-    <circle class="st-bg" cx="60" cy="60" r="50"/>
-    <circle class="st-ring" id="st-ring" cx="60" cy="60" r="50"/>
-  </svg>
-  <div id="st-center">
-    <span id="st-time">25:00</span>
-    <span id="st-label">POMODORO</span>
-    <span id="st-session">CLICK START</span>
+<!-- Voice settings popover -->
+<div id="vset-panel">
+  <div class="vset-hd">VOICE SETTINGS</div>
+  <label class="vset-lbl">VOICE</label>
+  <select id="vset-voice" onchange="vsetChanged()"></select>
+  <label class="vset-lbl">MIC LANGUAGE</label>
+  <select id="vset-lang" onchange="vsetChanged()">
+    <option value="en-US">ENGLISH (US)</option>
+    <option value="en-GB">ENGLISH (UK)</option>
+  </select>
+  <label class="vset-lbl">RATE · <span id="vset-rate-val">0.90</span></label>
+  <input type="range" id="vset-rate" min="0.6" max="1.2" step="0.05" oninput="vsetChanged()">
+  <label class="vset-lbl">PITCH · <span id="vset-pitch-val">0.85</span></label>
+  <input type="range" id="vset-pitch" min="0.5" max="1.2" step="0.05" oninput="vsetChanged()">
+  <label class="vset-lbl">SILENCE WINDOW · <span id="vset-silence-val">2.0s</span></label>
+  <input type="range" id="vset-silence" min="800" max="4000" step="200" oninput="vsetChanged()">
+
+  <div class="vset-sep"></div>
+  <div class="vset-hd" style="margin:2px 0 6px">WAKE</div>
+  <label class="vset-chk"><input type="checkbox" id="wset-voice" onchange="wsetChanged()"> VOICE WAKE · "JARVIS"</label>
+  <label class="vset-chk"><input type="checkbox" id="wset-clap" onchange="wsetChanged()"> DOUBLE-CLAP TO WAKE</label>
+  <label class="vset-chk"><input type="checkbox" id="wset-ack" onchange="wsetChanged()"> REPLY WHEN WOKEN</label>
+  <label class="vset-lbl">CLAP SENSITIVITY · <span id="wset-sens-val">5</span></label>
+  <input type="range" id="wset-sens" min="1" max="10" step="1" oninput="wsetChanged()">
+
+  <div class="vset-row">
+    <button onclick="vsetTest()">▶ TEST</button>
+    <button onclick="toggleVset()">CLOSE</button>
   </div>
-  <span id="st-hint">DBL·RESET</span>
+</div>
+
+<button id="dbg-btn" onclick="toggleDbg()" title="Voice system debug readout">◍ DBG</button>
+<div id="dbg-line" style="display:none"></div>
+<div id="tts-lock-hint" style="display:none">🔊 CLICK ANYWHERE TO ENABLE VOICE</div>
+
+<!-- Today's World Cup games (top-right) — click through to the full schedule -->
+<div id="wc-today" onclick="window.open('/worldcup-schedule','_blank')" title="Open the full World Cup schedule">
+  <div id="wc-today-hd">TODAY · WORLD CUP</div>
+  <div id="wc-today-list"><span class="wc-t-empty">LOADING…</span></div>
 </div>
 
 <!-- Chat toggle tab -->
@@ -1343,9 +1572,11 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
   const ctx = canvas.getContext('2d');
 
   /* ─── CONFIG ───────────────────────────────────────────────── */
-  const NODE_COUNT   = 80;    // number of nodes
+  const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const NODE_COUNT   = 50;    // fewer nodes — the arc-reactor rings are the hero now
   const CONNECT_DIST = 120;   // px — nodes closer than this get a connecting line
-  const MAX_SPEED    = 0.25;  // px/frame max drift
+  const MAX_SPEED    = REDUCED ? 0.04 : 0.25;  // px/frame max drift
+  const WEB_ALPHA    = 0.6;   // overall web opacity — reads as subtle inner texture
 
   let W, H, cx, cy, R;
   let nodes  = [];
@@ -1362,7 +1593,6 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
     an.getByteFrequencyData(d);
     const avg = d.reduce((a, b) => a + b, 0) / d.length;
     const energy = Math.max(0, Math.min(1, (avg - 10) / 40));
-    console.log('energy:', energy.toFixed(3), '  avg:', avg.toFixed(1));
     return energy;
   }
 
@@ -1480,7 +1710,8 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 
     // Spawn new pulses — voice energy adds up to 3× more activity when loud
     const active = getState() !== 'idle';
-    if (Math.random() < (active ? 0.38 : 0.14) + voiceEnergy * 0.50) spawnPulse();
+    const baseSpawn = (active ? 0.38 : 0.14) * (REDUCED ? 0.25 : 1);
+    if (Math.random() < baseSpawn + voiceEnergy * 0.50) spawnPulse();
   }
 
   /* ─── DRAW ─────────────────────────────────────────────────── */
@@ -1494,6 +1725,7 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
     ctx.save();
     ctx.translate(cx * (1 - vScale), cy * (1 - vScale));
     ctx.scale(vScale, vScale);
+    ctx.globalAlpha = WEB_ALPHA;   // dim the whole web so the rings stay the hero
 
     /* ── 1. CONNECTION LINES ──────────────────────────────────── */
     //  Draw every pair of nodes within CONNECT_DIST.
@@ -1518,10 +1750,10 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
         // Choose color from state or per-connection palette
         const CONN_PAL = [
           [0, 212, 255],    // 0 cyan
-          [139, 92, 246],   // 1 purple
-          [0, 255, 136],    // 2 green
-          [200, 220, 255],  // 3 white
-          [255, 107, 157],  // 4 pink
+          [56, 150, 255],   // 1 azure
+          [0, 224, 232],    // 2 aqua
+          [200, 224, 255],  // 3 white
+          [120, 200, 255],  // 4 sky
         ];
         let cr, cg, cb;
         if (state === 'listening') {
@@ -1568,11 +1800,11 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 
       // Pulse color matches line color logic
       const PULSE_PAL = [
-        [0, 212, 255],    // 0 cyan
-        [180, 80, 255],   // 1 purple (brighter for pulse)
-        [0, 255, 136],    // 2 green
-        [210, 230, 255],  // 3 white
-        [255, 107, 157],  // 4 pink
+        [120, 230, 255],  // 0 cyan (bright)
+        [90, 180, 255],   // 1 azure
+        [60, 240, 255],   // 2 aqua
+        [220, 238, 255],  // 3 white
+        [150, 215, 255],  // 4 sky
       ];
       let pr2, pg2, pb2;
       if (state === 'listening')       { pr2=255; pg2=100; pb2=100; }
@@ -1607,10 +1839,10 @@ body:has(#circle-wrap.speaking) #reactor-ring::after {
 
       const NODE_PAL = [
         [0, 212, 255],    // 0 cyan
-        [160, 80, 255],   // 1 purple
-        [0, 240, 120],    // 2 green
-        [200, 220, 255],  // 3 white
-        [255, 100, 150],  // 4 pink
+        [70, 160, 255],   // 1 azure
+        [0, 224, 232],    // 2 aqua
+        [205, 228, 255],  // 3 white
+        [130, 205, 255],  // 4 sky
       ];
       let nr, ng, nb;
       if (state === 'listening')       { nr=255; ng=80;  nb=80; }
@@ -1750,6 +1982,50 @@ async function fetchWeather() {
 }
 fetchWeather();
 setInterval(fetchWeather, 10 * 60 * 1000);
+
+// ─── WEATHER BY CITY (Open-Meteo, keyless + CORS-friendly) ───────────────────
+// Spoken-friendly condition phrases keyed by WMO weather code.
+const WMO_PHRASE = {
+  0:'clear skies', 1:'mainly clear', 2:'partly cloudy', 3:'overcast',
+  45:'foggy', 48:'freezing fog',
+  51:'light drizzle', 53:'drizzle', 55:'heavy drizzle',
+  56:'freezing drizzle', 57:'freezing drizzle',
+  61:'light rain', 63:'rain', 65:'heavy rain',
+  66:'freezing rain', 67:'freezing rain',
+  71:'light snow', 73:'snow', 75:'heavy snow', 77:'snow grains',
+  80:'light showers', 81:'showers', 82:'heavy showers',
+  85:'snow showers', 86:'heavy snow showers',
+  95:'thunderstorms', 96:'thunderstorms with hail', 99:'severe thunderstorms',
+};
+
+// Returns a spoken-friendly sentence for <place> (defaults to Zürich).
+async function weatherAnswer(place) {
+  let lat = 47.3769, lon = 8.5417, label = 'Zürich';
+  if (place) {
+    try {
+      const g = await (await fetch(
+        'https://geocoding-api.open-meteo.com/v1/search?name=' +
+        encodeURIComponent(place) + '&count=1',
+        { signal: AbortSignal.timeout(6000) }
+      )).json();
+      const hit = g.results && g.results[0];
+      if (!hit) return `I couldn't find a place called ${place}.`;
+      lat = hit.latitude; lon = hit.longitude;
+      label = hit.name + (hit.country ? ', ' + hit.country : '');
+    } catch { return `I couldn't look up the weather for ${place} right now.`; }
+  }
+  try {
+    const d = await (await fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+      '&current=temperature_2m,apparent_temperature,weather_code&timezone=auto',
+      { signal: AbortSignal.timeout(6000) }
+    )).json();
+    const t      = Math.round(d.current.temperature_2m);
+    const f      = Math.round(d.current.apparent_temperature);
+    const phrase = WMO_PHRASE[d.current.weather_code] || 'mixed conditions';
+    return `It's ${t}°, feels like ${f}°, ${phrase} in ${label}.`;
+  } catch { return `I couldn't get the weather right now.`; }
+}
 
 // ─── SERVER CONFIG ────────────────────────────────────────────────────────────
 const SERVER = 'http://localhost:3000';
@@ -2023,13 +2299,76 @@ function removeAttach(i) {
   renderFileChips();
 }
 
+// Patterns that look like factual questions → route to /search before Claude.
+const WEB_QUESTION = /^(?:what|who|where|when|why|how\s|which\b|is\s|are\s|does\b|do\s|define\b|explain\b|tell\s+me\s+about\b|capital\s+of\b|history\s+of\b|meaning\s+of\b)/i;
+
+// ONLY these explicit phrases create a StudyHub task — never loose keywords like
+// "exam" or "homework" on their own (that caused unwanted task-dumping).
+const EXPLICIT_ADD = /\b(?:add|remind\s+me|create\s+(?:a\s+)?task|new\s+(?:homework|task|exam|assignment)|set\s+(?:a\s+)?reminder|log\s+(?:a|an)\b)/i;
+
+// Client-side intent handler — reads HUB (StudyHub data) without a server round-trip.
+// Returns a plain-English string if the message matches, or null otherwise.
+async function tryLocalIntent(msg) {
+  if (!HUB) await fetchHub();
+  const td = todayStr();
+
+  // WEATHER — "weather", optionally "in/for/at <place>" (defaults to Zürich).
+  // Runs before any web-search / page-reader fallback.
+  if (/\bweather\b/i.test(msg)) {
+    const m = msg.match(/\bweather\b(?:\s+(?:in|for|at|of)\s+(.+?))?[?.!]*\s*$/i);
+    const place = (m && m[1]) ? m[1].trim() : null;
+    return await weatherAnswer(place);
+  }
+
+  // HOMEWORK
+  if (/\b(?:homework|due|tasks?|assignments?|what.*have.*due|what.*due)\b/i.test(msg)) {
+    const pending = (HUB?.homework || []).filter(h => !h.done && !h.archived);
+    if (!pending.length) return 'You have no pending homework right now.';
+    const today = pending.filter(h => h.dueDate === td);
+    const week  = pending.filter(h => h.dueDate > td && h.dueDate <= dateOffset(7));
+    const parts = [];
+    if (today.length) parts.push('Due today: ' + today.map(h => h.title).join(', ') + '.');
+    if (week.length)  parts.push('Due this week: ' + week.slice(0, 5).map(h => `${h.title} (${h.dueDate})`).join(', ') + '.');
+    if (!parts.length) parts.push(`Nothing due today. You have ${pending.length} pending task${pending.length !== 1 ? 's' : ''} total.`);
+    return parts.join(' ');
+  }
+
+  // EXAMS
+  if (/\b(?:exams?|tests?|quizzes?|next\s+exam|upcoming)\b/i.test(msg)) {
+    const upcoming = (HUB?.exams || []).filter(e => e.date >= td).sort((a, b) => a.date.localeCompare(b.date));
+    if (!upcoming.length) return 'No upcoming exams on record.';
+    const list = upcoming.slice(0, 5).map(e => {
+      const name = subjName(e.subjectId || e.subject) || 'Exam';
+      const diff = Math.round((new Date(e.date + 'T12:00:00') - new Date(td + 'T12:00:00')) / 86400000);
+      const when = diff === 0 ? 'today' : diff === 1 ? 'tomorrow' : `in ${diff} days`;
+      return `${name} on ${e.date} (${when})`;
+    });
+    return 'Upcoming exams: ' + list.join('; ') + '.';
+  }
+
+  // SCHEDULE / TIMETABLE
+  if (/\b(?:schedule|timetable|lessons?|classes|today.*class|class.*today|today.*lesson|lesson.*today)\b/i.test(msg)) {
+    const lessons = typeof getTodayLessons === 'function' ? getTodayLessons() : [];
+    if (!lessons.length) return 'No lessons scheduled for today.';
+    const list = lessons.map(l => {
+      const name  = subjName(l.subjectId || l.subject) || 'Lesson';
+      const start = l.start || l.startTime || '';
+      return name + (start ? ' at ' + start : '') + (l.room ? ' in room ' + l.room : '');
+    });
+    return "Today's lessons: " + list.join(', ') + '.';
+  }
+
+  return null; // no local intent matched
+}
+
 async function submitQuery() {
   const inp = document.getElementById('jarvis-inp');
   let msg = inp.value.trim();
   if (!msg) { inp.focus(); return; }
 
   // Upload any attached files first
-  if (attachedFiles.length > 0) {
+  const hasFiles = attachedFiles.length > 0;
+  if (hasFiles) {
     console.log('SERVER URL:', SERVER);
     const attachedPaths = [];
     for (const file of attachedFiles) {
@@ -2067,14 +2406,64 @@ async function submitQuery() {
   setProcessing(true);
 
   // Show loading state in panel
-  const body = document.getElementById('response-body');
+  const body  = document.getElementById('response-body');
+  const srcEl = document.getElementById('response-src');
   document.getElementById('response-cmd').textContent =
-    '▶  ' + (msg.length > 64 ? msg.slice(0, 64) + '…' : msg);
+    (msg.length > 120 ? msg.slice(0, 120) + '…' : msg);
+  srcEl.textContent = '';
   body.innerHTML = '<span class="r-loading">PROCESSING</span>';
   startDots(body.querySelector('.r-loading'));
   document.getElementById('response-panel').classList.add('visible');
 
+  function showResult(text, source) {
+    stopDots();
+    body.textContent  = text;
+    srcEl.textContent = source ? '— ' + source : '';
+    body.scrollTop = 0;
+  }
+
   try {
+    // ── 1. CLIENT-SIDE LOCAL INTENTS (homework / exams / schedule) ─────────
+    if (!hasFiles) {
+      const localAnswer = await tryLocalIntent(msg);
+      if (localAnswer !== null) {
+        showResult(localAnswer);
+        jarvisSpeak(localAnswer);
+        setStatus('online', 'JARVIS CONNECTED');
+        return;
+      }
+    }
+
+    // ── 2. QUESTIONS → web search ONLY (no page-reader / task-add fallback) ─
+    const isQuestion = WEB_QUESTION.test(msg) || /\?\s*$/.test(msg);
+    if (!hasFiles && !EXPLICIT_ADD.test(msg) && isQuestion) {
+      body.innerHTML = '<span class="r-loading">SEARCHING WEB</span>';
+      startDots(body.querySelector('.r-loading'));
+      let sd = null;
+      try {
+        sd = await (await fetch(
+          `${SERVER}/search?q=${encodeURIComponent(msg)}`,
+          { signal: AbortSignal.timeout(10000) }
+        )).json();
+      } catch { /* network/server error — handled below */ }
+
+      if (sd && sd.answer) {
+        showResult(sd.answer, sd.source);
+        // Speak first 1–2 sentences only
+        const spoken = sd.answer.replace(/\n.*/s, '').split(/(?<=\.)\s+/).slice(0, 2).join(' ').trim();
+        jarvisSpeak((spoken || sd.answer).slice(0, 500));
+      } else {
+        // Nothing found — say so plainly. Never surface the Chrome page-reader
+        // permission message for a normal question.
+        const none = "I couldn't find anything on that.";
+        showResult(none);
+        jarvisSpeak(none);
+      }
+      setStatus('online', 'JARVIS CONNECTED');
+      return;
+    }
+
+    // ── 3. CLAUDE via /command (commands, explicit task-add, general requests) ─
     const r = await fetch(`${SERVER}/command`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2088,8 +2477,7 @@ async function submitQuery() {
       body.textContent = '✗  ' + data.error;
     } else {
       const result = data.result || 'No output received.';
-      body.textContent = result;
-      body.scrollTop = 0;
+      showResult(result);
       jarvisSpeak(result);
     }
 
@@ -2127,11 +2515,11 @@ function showToast(msg) {
 // ─── VOICE SYSTEM ─────────────────────────────────────────────────────────────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-// Voice TTS defaults OFF; persisted across sessions via localStorage.
-// Wake word defaults ON (existing behavior); also persisted.
+// Voice TTS defaults ON (was the reason Jarvis never spoke on fresh profiles);
+// persisted across sessions. Wake word defaults ON; also persisted.
 const V = {
   listening: false, speaking: false,
-  muted: (localStorage.getItem('jarvis_voice') ?? 'off') !== 'on',
+  muted: (localStorage.getItem('jarvis_voice') ?? 'on') !== 'on',
   wake:  (localStorage.getItem('jarvis_wake')  ?? 'on')  === 'on',
 };
 let micBlocked = false;   // true when Chrome mic permission is denied
@@ -2143,6 +2531,41 @@ let micStream  = null;   // active viz stream (reuses permStream)
 let permStream = null;   // persistent pre-authorized stream — never stopped
 let vizFrame   = null;
 
+// ── DEBUG LINE ────────────────────────────────────────────────────────────────
+// Live voice-system state, toggled with the ◍ DBG button. Each dbg() call
+// updates one field and re-renders; everything also goes to the console.
+const DBG = { perm: '?', tts: '—', txt: '' };
+let dbgOn = localStorage.getItem('jarvis_dbg') === 'on';
+function dbg(field, val) {
+  if (field) {
+    DBG[field] = val;
+    console.log('[JARVIS:' + field + ']', val);
+  }
+  const el = document.getElementById('dbg-line');
+  if (!el) return;
+  el.style.display = dbgOn ? '' : 'none';
+  if (!dbgOn) return;
+  el.textContent =
+    'MIC:' + DBG.perm +
+    '  WAKE:' + (wakeRec ? 'RUN' : '—') +
+    '  CMD:' + (cmdRec ? 'RUN' : '—') +
+    '  TTS:' + DBG.tts +
+    (DBG.txt ? '  »' + DBG.txt.slice(-60) : '');
+}
+function toggleDbg() {
+  dbgOn = !dbgOn;
+  localStorage.setItem('jarvis_dbg', dbgOn ? 'on' : 'off');
+  const btn = document.getElementById('dbg-btn');
+  if (btn) btn.textContent = dbgOn ? '◍ DBG ON' : '◍ DBG';
+  dbg();
+}
+setInterval(dbg, 1000);   // keep WAKE/CMD fields fresh even without events
+setTimeout(() => {        // reflect persisted debug state on the button at boot
+  const b = document.getElementById('dbg-btn');
+  if (b && dbgOn) b.textContent = '◍ DBG ON';
+  dbg();
+}, 600);
+
 // Mic stream is acquired at most once, on the first user gesture.
 // Never called on page load — browsers require a gesture before granting mic access,
 // and calling it eagerly is what causes the popup to appear automatically.
@@ -2151,8 +2574,13 @@ async function initMicStream() {
   if (micInitDone || permStream) return;
   micInitDone = true;
   try {
-    permStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    permStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      video: false
+    });
   } catch { /* denied or no mic — SpeechRecognition still works without it */ }
+  // Stream is live — bring the always-on double-clap detector online.
+  if (permStream && WAKESET.clap) startClapDetector();
 }
 
 // Pre-warm on first click or keypress anywhere on the page.
@@ -2175,9 +2603,172 @@ function setCircleState(state) {
   }
 }
 
+// ── VOICE PREFERENCES (persisted) ─────────────────────────────────────────────
+// voice:'auto' picks the best British voice available; otherwise a voice name.
+const VSET = (() => {
+  try { return Object.assign({ voice: 'auto', rate: 0.9, pitch: 0.85, lang: 'en-GB', silence: 2000 },
+        JSON.parse(localStorage.getItem('jarvis_vset') || '{}')); }
+  catch { return { voice: 'auto', rate: 0.9, pitch: 0.85, lang: 'en-GB', silence: 2000 }; }
+})();
+function saveVset() { localStorage.setItem('jarvis_vset', JSON.stringify(VSET)); }
+
+// ── WAKE SETTINGS (double-clap + voice phrase + spoken reply) ────────────────
+// Double-clap defaults OFF (it was unreliable / self-triggering); ack default ON;
+// voice wake is the existing V.wake (jarvis_wake) toggle.
+const WAKESET = (() => {
+  try { return Object.assign({ clap: false, ack: true, clapSens: 5 },
+        JSON.parse(localStorage.getItem('jarvis_wakeset') || '{}')); }
+  catch { return { clap: false, ack: true, clapSens: 5 }; }
+})();
+function saveWakeset() { localStorage.setItem('jarvis_wakeset', JSON.stringify(WAKESET)); }
+
+// One-time migration: the old clap detector false-triggered, so force it OFF once
+// for anyone who had it enabled. They can re-enable it deliberately afterwards.
+if (!localStorage.getItem('jarvis_wake_clapfix')) {
+  WAKESET.clap = false;
+  localStorage.setItem('jarvis_wake_clapfix', '1');
+  saveWakeset();
+}
+
+// Best available "British butler" voice, in priority order:
+// Daniel (macOS en-GB) → Google UK English Male (Chrome) → Arthur/Oliver (Apple)
+// → any en-GB → Alex (macOS) → any English voice.
+function pickJarvisVoice() {
+  const voices = window.speechSynthesis?.getVoices?.() || [];
+  if (!voices.length) return null;
+  if (VSET.voice !== 'auto') {
+    const chosen = voices.find(v => v.name === VSET.voice);
+    if (chosen) return chosen;                 // saved voice gone? fall through to auto
+  }
+  const gb = voices.filter(v => /^en[-_]GB/i.test(v.lang));
+  return gb.find(v => v.name === 'Daniel')
+      || voices.find(v => v.name === 'Google UK English Male')
+      || gb.find(v => /arthur|oliver/i.test(v.name))
+      || gb[0]
+      || voices.find(v => v.name === 'Alex')
+      || voices.find(v => /^en/i.test(v.lang))
+      || null;
+}
+
+// ── VOICE SETTINGS PANEL ──────────────────────────────────────────────────────
+function toggleVset() {
+  if (!window.speechSynthesis) { showToast('SPEECH SYNTHESIS NOT SUPPORTED'); return; }
+  const p = document.getElementById('vset-panel');
+  const opening = !p.classList.contains('open');
+  p.classList.toggle('open', opening);
+  if (opening) populateVset();
+}
+
+function populateVset() {
+  const sel = document.getElementById('vset-voice');
+  const voices = (window.speechSynthesis?.getVoices?.() || [])
+    .filter(v => /^en/i.test(v.lang))
+    .sort((a, b) => (/^en[-_]GB/i.test(b.lang) - /^en[-_]GB/i.test(a.lang)) || a.name.localeCompare(b.name));
+  const auto = pickJarvisVoice();
+  sel.innerHTML = `<option value="auto">AUTO — ${auto ? auto.name.toUpperCase() : 'BRITISH'}</option>` +
+    voices.map(v => `<option value="${v.name.replace(/"/g,'&quot;')}" ${VSET.voice===v.name?'selected':''}>${v.name.toUpperCase()} (${v.lang})</option>`).join('');
+  if (VSET.voice === 'auto') sel.value = 'auto';
+  document.getElementById('vset-lang').value  = VSET.lang || 'en-GB';
+  document.getElementById('vset-rate').value  = VSET.rate;
+  document.getElementById('vset-pitch').value = VSET.pitch;
+  document.getElementById('vset-silence').value = VSET.silence || 2000;
+  document.getElementById('vset-rate-val').textContent    = VSET.rate.toFixed(2);
+  document.getElementById('vset-pitch-val').textContent   = VSET.pitch.toFixed(2);
+  document.getElementById('vset-silence-val').textContent = ((VSET.silence || 2000) / 1000).toFixed(1) + 's';
+  populateWset();
+}
+
+// Reflect wake-settings state on the popover controls.
+function populateWset() {
+  const g = id => document.getElementById(id);
+  if (g('wset-voice')) g('wset-voice').checked = V.wake;
+  if (g('wset-clap'))  g('wset-clap').checked  = WAKESET.clap;
+  if (g('wset-ack'))   g('wset-ack').checked   = WAKESET.ack;
+  if (g('wset-sens'))  g('wset-sens').value    = WAKESET.clapSens;
+  if (g('wset-sens-val')) g('wset-sens-val').textContent = WAKESET.clapSens;
+}
+
+function wsetChanged() {
+  const voiceOn = document.getElementById('wset-voice').checked;
+  WAKESET.clap     = document.getElementById('wset-clap').checked;
+  WAKESET.ack      = document.getElementById('wset-ack').checked;
+  WAKESET.clapSens = parseInt(document.getElementById('wset-sens').value, 10) || 5;
+  document.getElementById('wset-sens-val').textContent = WAKESET.clapSens;
+  saveWakeset();
+  // Voice wake maps onto the existing V.wake recognizer toggle.
+  if (voiceOn !== V.wake) toggleWake();          // persists + starts/stops + syncs UI
+  document.getElementById('wset-voice').checked = V.wake;  // re-sync (e.g. if mic blocked)
+  // Clap detector on/off.
+  if (WAKESET.clap) startClapDetector(); else stopClapDetector();
+}
+
+function vsetChanged() {
+  VSET.voice = document.getElementById('vset-voice').value;
+  const newLang = document.getElementById('vset-lang').value;
+  const langChanged = newLang !== VSET.lang;
+  VSET.lang  = newLang;
+  VSET.rate    = parseFloat(document.getElementById('vset-rate').value);
+  VSET.pitch   = parseFloat(document.getElementById('vset-pitch').value);
+  VSET.silence = parseInt(document.getElementById('vset-silence').value, 10);
+  document.getElementById('vset-rate-val').textContent    = VSET.rate.toFixed(2);
+  document.getElementById('vset-pitch-val').textContent   = VSET.pitch.toFixed(2);
+  document.getElementById('vset-silence-val').textContent = (VSET.silence / 1000).toFixed(1) + 's';
+  saveVset();
+  if (langChanged) { stopWakeWord(); setTimeout(startWakeWord, 200); }  // re-spawn with new lang
+}
+
+function vsetTest() {
+  if (V.muted) { showToast('VOICE IS MUTED — TURN ♪ VOICE ON FIRST'); return; }
+  jarvisSpeak('Good evening, Alex. All systems are functioning within normal parameters.');
+}
+
+// Voice list loads asynchronously in Chrome — refresh the dropdown when ready.
+if (window.speechSynthesis) {
+  window.speechSynthesis.addEventListener?.('voiceschanged', () => {
+    if (document.getElementById('vset-panel')?.classList.contains('open')) populateVset();
+  });
+}
+
+// ── TTS AUTOPLAY UNLOCK ──────────────────────────────────────────────────────
+// Chrome refuses speechSynthesis.speak() until the page has had a user gesture.
+// On the first click/keypress we speak a silent utterance inside the gesture
+// handler (this unlocks the engine), then flush anything that queued meanwhile.
+let ttsUnlocked   = false;
+let pendingSpeech = null;
+
+function unlockTTS() {
+  if (ttsUnlocked || !window.speechSynthesis) return;
+  ttsUnlocked = true;
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);     // silent — just satisfies the gesture rule
+    dbg('tts', 'unlocked');
+  } catch {}
+  const hint = document.getElementById('tts-lock-hint');
+  if (hint) hint.style.display = 'none';
+  if (pendingSpeech) {
+    const t = pendingSpeech; pendingSpeech = null;
+    setTimeout(() => jarvisSpeak(t), 250);
+  }
+}
+document.addEventListener('click',   unlockTTS, { once: false });
+document.addEventListener('keydown', unlockTTS, { once: false });
+
 // ── SPEECH SYNTHESIS ──────────────────────────────────────────────────────────
 function jarvisSpeak(text) {
-  if (V.muted || !text || !text.trim()) return;
+  if (!window.speechSynthesis) { dbg('tts', 'unsupported'); return; }
+  if (!text || !text.trim()) return;
+  if (V.muted) { dbg('tts', 'muted-skip'); return; }
+
+  // Autoplay-locked: queue the latest text and show the unlock hint.
+  if (!ttsUnlocked) {
+    pendingSpeech = text;
+    dbg('tts', 'locked-queued');
+    const hint = document.getElementById('tts-lock-hint');
+    if (hint) hint.style.display = '';
+    return;
+  }
 
   // Strip markdown, collapse whitespace, cap length
   const clean = text
@@ -2190,39 +2781,49 @@ function jarvisSpeak(text) {
     .trim();
   const capped = clean.length > 600 ? clean.slice(0, 600) + '…' : clean;
 
-  window.speechSynthesis.cancel();
+  window.speechSynthesis.cancel();      // clear any stuck/queued utterance
   const u = new SpeechSynthesisUtterance(capped);
-  u.rate   = 0.85;
-  u.pitch  = 0.72;
+  u.rate   = VSET.rate;
+  u.pitch  = VSET.pitch;
   u.volume = 1.0;
 
   u.onstart = () => {
     V.speaking = true;
+    stopWakeWord();                     // don't let Jarvis hear himself
+    if (V.listening) stopListening();
     setCircleState('speaking');
     setStatus('busy', 'SPEAKING');
+    dbg('tts', 'speaking');
     const btn = document.getElementById('mic-btn');
     if (btn) btn.className = btn.className.replace('listening', '') + ' speaking';
   };
-  u.onend = u.onerror = () => {
+  u.onend = () => { dbg('tts', 'ended'); ttsDone(); };
+  u.onerror = e => { dbg('tts', 'error:' + (e.error || '?')); ttsDone(); };
+  function ttsDone() {
     V.speaking = false;
     setCircleState('idle');
     setStatus('online', 'JARVIS CONNECTED');
     const btn = document.getElementById('mic-btn');
     if (btn) btn.classList.remove('speaking');
-    setTimeout(startWakeWord, 400);
-  };
+    setTimeout(startWakeWord, 400);     // resume listening after speech
+  }
 
-  const setVoice = () => {
-    const voices = window.speechSynthesis.getVoices();
-    const alex = voices.find(v => v.name === 'Alex');
-    if (alex) u.voice = alex;
+  // Voices load async in Chrome — wait for them, but never wait forever:
+  // after 1.2s speak with the default voice rather than staying silent.
+  let spoken = false;
+  const go = () => {
+    if (spoken) return;
+    spoken = true;
+    const v = pickJarvisVoice();
+    if (v) u.voice = v;
     // Delay speak() after cancel() — Chrome drops utterances queued too quickly
     setTimeout(() => { window.speechSynthesis.speak(u); }, 200);
   };
   if (window.speechSynthesis.getVoices().length > 0) {
-    setVoice();
+    go();
   } else {
-    window.speechSynthesis.onvoiceschanged = setVoice;
+    window.speechSynthesis.addEventListener('voiceschanged', go, { once: true });
+    setTimeout(go, 1200);
   }
 }
 
@@ -2252,6 +2853,22 @@ function syncMuteButton() {
 }
 syncMuteButton();
 
+// ── SIDE PANELS TOGGLE (minimal mode is the default) ─────────────────────────
+function togglePanels() {
+  const on = !document.body.classList.contains('show-panels');
+  document.body.classList.toggle('show-panels', on);
+  localStorage.setItem('jarvis_panels', on ? 'on' : 'off');
+  syncPanelsButton();
+}
+function syncPanelsButton() {
+  const on  = document.body.classList.contains('show-panels');
+  const btn = document.getElementById('panels-btn');
+  if (btn) btn.textContent = on ? '▦ PANELS ON' : '▦ PANELS';
+}
+// Default OFF — only show panels if explicitly enabled before.
+if (localStorage.getItem('jarvis_panels') === 'on') document.body.classList.add('show-panels');
+syncPanelsButton();
+
 // ── SOUND FX (WebAudio, no files) ────────────────────────────────────────────
 // Short synthesized chimes: 'wake' = rising two-tone, 'ok' = single high note,
 // 'err' = falling low two-tone. Silent when voice is muted or audio unavailable.
@@ -2275,6 +2892,182 @@ function playChime(kind = 'wake') {
       o.start(t); o.stop(t + .25);
     }
   } catch { /* no audio — chimes are cosmetic */ }
+  // Briefly deafen the clap detector so the chime can't wake Jarvis itself.
+  clapSuppressUntil = Math.max(clapSuppressUntil, Date.now() + 450);
+}
+
+// ── SHARED ACTIVATION (voice phrase OR double-clap → same wake) ───────────────
+let wakeCooldownUntil = 0;   // Date.now() guard — blocks re-trigger right after waking
+
+// One place that "wakes" Jarvis: chime → waking pulse → optional spoken reply →
+// command listening. Used by both the voice wake recognizer and the clap detector.
+function activateJarvis(source) {
+  if (V.listening || V.speaking) return;          // already awake / busy
+  if (Date.now() < wakeCooldownUntil) return;     // cooldown after a recent wake
+  wakeCooldownUntil = Date.now() + 1500;
+  clapFirstAt = 0;                                 // drop any pending clap state
+  stopWakeWord();                                  // don't let the recognizer overlap
+  playChime('wake');
+  wakingPulse();
+  dbg('txt', 'WAKE:' + (source || '?'));
+  if (WAKESET.ack) {
+    speakAck(pickAck(), () => startListening());   // speak "Yes?", then listen
+  } else {
+    startListening();                              // immediate — no lost words
+  }
+}
+
+function pickAck() {
+  const lines = ['Yes?', "I'm listening.", 'Go ahead.', 'How can I help?'];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+// Minimal one-shot utterance for the wake acknowledgement. Unlike jarvisSpeak,
+// it calls back into command listening on end (jarvisSpeak resumes the wake word).
+function speakAck(text, cb) {
+  if (!window.speechSynthesis || V.muted || !ttsUnlocked) { cb(); return; }
+  let done = false;
+  const finish = () => { if (done) return; done = true; V.speaking = false; cb(); };
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = VSET.rate; u.pitch = VSET.pitch; u.volume = 1.0;
+    const v = pickJarvisVoice(); if (v) u.voice = v;
+    V.speaking = true;                  // suppresses clap + wake while replying
+    setCircleState('speaking');
+    u.onend = finish; u.onerror = finish;
+    setTimeout(() => { try { window.speechSynthesis.speak(u); } catch { finish(); } }, 60);
+    setTimeout(finish, 1900);           // safety — never hang if TTS stalls
+  } catch { finish(); }
+}
+
+// Big glow + brief scale: the "waking up" animation on the central orb.
+function wakingPulse() {
+  const wrap = document.getElementById('circle-wrap');
+  if (!wrap) return;
+  wrap.classList.add('waking');
+  wrap.style.transition = 'transform .18s cubic-bezier(.22,1,.36,1)';
+  wrap.style.transform  = 'scale(1.05)';
+  setTimeout(() => { if (!V.listening) wrap.style.transform = ''; }, 220);
+  setTimeout(() => wrap.classList.remove('waking'), 700);
+}
+
+// Subtle pulse so the user sees the FIRST clap was registered.
+function clapPulse() {
+  const wrap = document.getElementById('circle-wrap');
+  if (!wrap || V.listening || V.speaking) return;
+  wrap.style.transition = 'transform .12s ease';
+  wrap.style.transform  = 'scale(1.03)';
+  setTimeout(() => { if (!V.listening && !V.speaking) wrap.style.transform = ''; }, 130);
+}
+
+// ── DOUBLE-CLAP DETECTOR (transient detection on a DEDICATED mic stream) ──────
+// Listens for two sharp energy transients (claps) ~150–600 ms apart. Runs on its
+// OWN getUserMedia stream (autoGainControl OFF so silence isn't pumped up;
+// echoCancellation ON so Jarvis's own chime/voice is cancelled) — NOT the
+// permStream used by command listening/viz. A clap must be a genuine spike: well
+// above an absolute floor AND far above the rolling ambient baseline, after a
+// short quiet gap. Fully ignored while Jarvis listens/speaks/chimes + cooldown.
+let clapCtx = null, clapAnalyser = null, clapRAF = null, clapData = null;
+let clapStream = null;         // dedicated mic stream (separate from permStream)
+let clapFirstAt = 0;           // performance.now() of clap #1 (0 = none pending)
+let clapRefractoryUntil = 0;   // performance.now() — ignore decay tail of a clap
+let clapQuiet = 0;             // consecutive quiet frames (the "after quiet" gate)
+let clapBaseline = 0;          // slow EMA of ambient peak level
+let clapSuppressUntil = 0;     // Date.now() — deaf window (chime/self-noise)
+
+// Sensitivity 1 (hard) → 10 (easy) maps to an absolute peak-amplitude floor.
+// Raised well above talking/hiss so only a genuine sharp clap qualifies.
+function clapThreshold() {
+  const s = Math.min(10, Math.max(1, WAKESET.clapSens || 5));
+  return 0.62 - ((s - 1) / 9) * (0.62 - 0.34);   // 0.62 (hard) .. 0.34 (easy)
+}
+
+async function startClapDetector() {
+  if (!WAKESET.clap || clapAnalyser || clapStream) return;
+  // Dedicated stream so the detector is never reading the same audio the command
+  // recognizer/viz is using. AGC off = no silence-pumping false transients.
+  try {
+    clapStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
+      video: false
+    });
+  } catch { clapStream = null; return; }            // denied / no mic — degrade gracefully
+  if (!WAKESET.clap) { stopClapDetector(); return; } // turned off while awaiting permission
+  try {
+    clapCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (clapCtx.state === 'suspended') clapCtx.resume();
+    clapAnalyser = clapCtx.createAnalyser();
+    clapAnalyser.fftSize = 1024;
+    clapCtx.createMediaStreamSource(clapStream).connect(clapAnalyser);
+    clapData = new Uint8Array(clapAnalyser.fftSize);
+    clapBaseline = 0; clapQuiet = 0; clapFirstAt = 0;
+    clapLoop();
+    dbg('txt', 'clap:on');
+  } catch { stopClapDetector(); }
+}
+
+function stopClapDetector() {
+  if (clapRAF) { cancelAnimationFrame(clapRAF); clapRAF = null; }
+  if (clapCtx) { clapCtx.close().catch(() => {}); clapCtx = null; }
+  if (clapStream) { try { clapStream.getTracks().forEach(t => t.stop()); } catch {} clapStream = null; }
+  clapAnalyser = null; clapData = null;
+  clapFirstAt = 0; clapQuiet = 0; clapBaseline = 0;
+}
+
+function clapLoop() {
+  if (!clapAnalyser) { clapRAF = null; return; }   // stopped — end the loop
+  clapRAF = requestAnimationFrame(clapLoop);
+  const now = performance.now();
+
+  // Completely ignore audio while Jarvis is listening, speaking, chiming, or
+  // within the post-activation cooldown — this is what stops it self-triggering.
+  if (V.speaking || V.listening ||
+      Date.now() < wakeCooldownUntil || Date.now() < clapSuppressUntil) {
+    clapQuiet = 0; clapFirstAt = 0; return;
+  }
+
+  clapAnalyser.getByteTimeDomainData(clapData);
+  let peak = 0;
+  for (let i = 0; i < clapData.length; i++) {
+    const d = Math.abs(clapData[i] - 128);
+    if (d > peak) peak = d;
+  }
+  peak /= 128;                                     // 0..1 instantaneous peak
+
+  const th   = clapThreshold();
+  const gate = Math.max(th * 0.45, clapBaseline * 1.8);   // "quiet" ceiling
+
+  // Count calm frames and let the ambient baseline track the quiet level only.
+  if (peak < gate) {
+    clapQuiet = Math.min(clapQuiet + 1, 999);
+    clapBaseline += (peak - clapBaseline) * 0.05;  // slow follow toward ambient
+    return;
+  }
+
+  if (now < clapRefractoryUntil) return;           // still inside a clap's tail
+
+  // A clap = loud spike, above the absolute floor AND far above ambient, AND it
+  // arrived after a genuine quiet gap (~65 ms). All three required.
+  const isClap = peak >= th && peak > clapBaseline * 3 + 0.08 && clapQuiet >= 4;
+  if (isClap) {
+    clapRefractoryUntil = now + 140;               // refractory so one clap ≠ two
+    clapQuiet = 0;
+    onClap(now);
+  }
+}
+
+function onClap(now) {
+  if (clapFirstAt) {
+    const dt = now - clapFirstAt;
+    if (dt >= 150 && dt <= 600) { clapFirstAt = 0; activateJarvis('clap'); return; }
+    if (dt < 150) return;                           // too fast — ignore, keep waiting
+    // dt > 600 → stale; treat this as a fresh first clap below
+  }
+  clapFirstAt = now;
+  clapPulse();
+  const mine = now;
+  setTimeout(() => { if (clapFirstAt === mine) clapFirstAt = 0; }, 650);  // reset if no 2nd
 }
 
 // ── WAKE WORD TOGGLE + MIC STATE UI ──────────────────────────────────────────
@@ -2315,13 +3108,15 @@ if (navigator.permissions?.query) {
   navigator.permissions.query({ name: 'microphone' }).then(p => {
     const apply = () => {
       micBlocked = (p.state === 'denied');
+      dbg('perm', p.state);                 // granted | denied | prompt
       syncWakeUI();
       if (!micBlocked) setTimeout(startWakeWord, 300);
     };
     p.onchange = apply;
     apply();
-  }).catch(() => { syncWakeUI(); });
+  }).catch(() => { dbg('perm', '?'); syncWakeUI(); });
 } else {
+  dbg('perm', 'no-api');
   syncWakeUI();
 }
 
@@ -2388,6 +3183,7 @@ function stopAudioViz() {
 }
 
 // ── COMMAND RECOGNITION ───────────────────────────────────────────────────────
+
 function startListening() {
   if (!SR) { showToast('SPEECH API NOT SUPPORTED — USE CHROME'); return; }
   if (V.listening || V.speaking) return;
@@ -2401,48 +3197,87 @@ function startListening() {
   document.getElementById('mic-btn').classList.add('listening');
   startAudioViz();
 
-  cmdRec = new SR();
-  cmdRec.continuous      = false;
-  cmdRec.interimResults  = true;
-  cmdRec.lang            = 'en-US';
-  cmdRec.maxAlternatives = 1;
-
   const inp = document.getElementById('jarvis-inp');
+  let finalTxt = '';
+  let cmdDone  = false;
+  let silenceTimer = null;
+  let respawns = 0;
+  let lastConf = 0;
+  const stripWake = s => s.replace(/^(hey\s+|ok\s+)?jarvis[,.\s-]*/i, '').replace(/\s+/g, ' ').trim();
 
-  cmdRec.onresult = e => {
-    const r = e.results[e.results.length - 1];
-    const txt = r[0].transcript.trim();
-    inp.value = txt;
-
-    if (r.isFinal) {
-      // Strip wake word prefix if present
-      const cleaned = txt.replace(/^(hey\s+)?jarvis[,.\s]*/i, '').trim();
-      inp.value = cleaned;
-      stopListening();
-      if (cleaned) setTimeout(submitQuery, 80);
-    }
-  };
-
-  cmdRec.onerror = e => {
-    if (e.error === 'not-allowed') {
-      micBlocked = true;
-      syncWakeUI();
-      showToast('MIC BLOCKED — ALLOW MICROPHONE IN CHROME SITE SETTINGS');
-      playChime('err');
-    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      showToast('MIC ERROR: ' + e.error.toUpperCase());
-      playChime('err');
-    }
+  // The silence timer is the ONLY thing that submits — not phrase boundaries,
+  // and not Chrome ending the recognition session.
+  function armSilence(ms) {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(finishCmd, ms);
+  }
+  function finishCmd() {
+    if (cmdDone) return;
+    cmdDone = true;
+    clearTimeout(silenceTimer);
+    const cleaned = stripWake((inp.value || '').trim());
+    inp.value = cleaned;
     stopListening();
-  };
+    if (cleaned) setTimeout(submitQuery, 80);
+  }
+  function spawnRec() {
+    const r = new SR();
+    r.continuous      = true;
+    r.interimResults  = true;
+    r.lang            = VSET.lang || 'en-GB';   // selectable in ⚙ VOICE SET
+    r.maxAlternatives = 3;
+    r.onresult = e => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        if (res.isFinal) {
+          // Use the highest-confidence alternative, not blindly the first
+          let best = res[0];
+          for (let a = 1; a < res.length; a++) {
+            if ((res[a].confidence || 0) > (best.confidence || 0)) best = res[a];
+          }
+          finalTxt += ' ' + best.transcript;
+          if (best.confidence) lastConf = best.confidence;
+        } else {
+          interim += res[0].transcript;
+          if (res[0].confidence) lastConf = res[0].confidence;
+        }
+      }
+      inp.value = stripWake((finalTxt + ' ' + interim).trim());
+      dbg('txt', inp.value);
+      // Update confidence badge with most recent result's confidence
+      const badge = document.getElementById('conf-badge');
+      if (badge) {
+        const confPct = lastConf ? Math.round(lastConf * 100) : null;
+        badge.textContent = confPct != null ? confPct + '%' : '';
+        badge.className = 'conf-badge' + (confPct == null ? '' : confPct >= 80 ? ' conf-hi' : confPct >= 55 ? ' conf-mid' : ' conf-lo');
+      }
+      armSilence(VSET.silence || 2000);   // submit only after a clear pause
+    };
+    r.onerror = e => {
+      if (e.error === 'not-allowed') {
+        micBlocked = true; syncWakeUI();
+        showToast('MIC BLOCKED — ALLOW MICROPHONE IN CHROME SITE SETTINGS');
+        playChime('err'); cmdDone = true; stopListening();
+      } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        showToast('MIC ERROR: ' + e.error.toUpperCase());
+      }
+    };
+    r.onend = () => {
+      // Chrome ends sessions on its own mid-speech — DON'T submit here.
+      // Restart and let the silence timer decide when you're actually done.
+      if (cmdDone || !V.listening) return;
+      if (respawns++ > 40) { finishCmd(); return; }
+      setTimeout(() => {
+        if (cmdDone || !V.listening) return;
+        try { cmdRec = spawnRec(); cmdRec.start(); } catch {}
+      }, 120);
+    };
+    return r;
+  }
 
-  cmdRec.onend = () => {
-    // If final result was already handled, this is a no-op
-    stopListening();
-    const val = document.getElementById('jarvis-inp').value.trim();
-    if (val) setTimeout(submitQuery, 80);
-  };
-
+  armSilence(8000);   // up to 8s to start speaking after the chime
+  cmdRec = spawnRec();
   try { cmdRec.start(); }
   catch { stopListening(); }
 }
@@ -2457,6 +3292,8 @@ function stopListening() {
   stopAudioViz();
   setCircleState('idle');
   document.getElementById('mic-btn').classList.remove('listening');
+  const _cb = document.getElementById('conf-badge');
+  if (_cb) { _cb.textContent = ''; _cb.className = 'conf-badge'; }
 
   if (!V.speaking) {
     setStatus('online', 'JARVIS CONNECTED');
@@ -2471,7 +3308,10 @@ function toggleMic() {
 
 // ── WAKE WORD ─────────────────────────────────────────────────────────────────
 // Common misrecognitions of "Jarvis" so the wake phrase is forgiving.
-const WAKE_RE = /\b(hey\s+)?(jarvis|jervis|jarvas|javis|jarves|jarvys)\b/i;
+const WAKE_RE = /\b(hey\s+|ok\s+|yo\s+)?(jarvis|jervis|jarvas|javis|jarves|jarvys|jarvic|jarviz|jarvix|jarvi|jarv|gervais|travis|harvest|jarbis|jarwis|jardis|jarviss|java's)\b/i;
+function isWake(t) {
+  return WAKE_RE.test(t) || /\bj[aeiou]?rv\w*/i.test(t) || /\bjar[bvw]\w*/i.test(t);
+}
 
 function startWakeWord() {
   if (!SR || !V.wake || micBlocked || wakeRec || V.listening || V.speaking) return;
@@ -2479,28 +3319,22 @@ function startWakeWord() {
   wakeRec = new SR();
   wakeRec.continuous     = true;
   wakeRec.interimResults = true;
-  wakeRec.lang           = 'en-US';
+  wakeRec.lang           = VSET.lang || 'en-GB';
 
   wakeRec.onresult = e => {
     const txt = Array.from(e.results)
       .map(r => r[0].transcript)
       .join(' ');
 
-    if (WAKE_RE.test(txt)) {
-      stopWakeWord();
-      playChime('wake');
-      // Brief flash before listening
-      const wrap = document.getElementById('circle-wrap');
-      wrap.style.transition = 'transform 0.15s';
-      wrap.style.transform  = 'scale(1.04)';
-      setTimeout(() => { wrap.style.transform = ''; startListening(); }, 200);
-    }
+    // "jarvis", "hey jarvis", "jarvis wake up", "wake up jarvis" all match via
+    // isWake (substring + fuzzy mishears). Route through the shared activation.
+    if (isWake(txt)) activateJarvis('voice');
   };
 
   wakeRec.onend = () => {
     wakeRec = null;
-    // Auto-restart unless actively listening/speaking (or toggled off)
-    if (!V.listening && !V.speaking) setTimeout(startWakeWord, 1000);
+    // Auto-restart fast to minimise the "deaf gap" between sessions
+    if (!V.listening && !V.speaking) setTimeout(startWakeWord, 150);
   };
 
   wakeRec.onerror = e => {
@@ -2811,102 +3645,59 @@ function renderTimetableStrip() {
 setInterval(renderTimetableStrip, 60 * 1000);
 
 // ═══════════════════════════════════════════════════════════════
-//  FEATURE 3 — STUDY TIMER (Pomodoro)
+//  FEATURE 3 — TODAY'S WORLD CUP GAMES (top-right widget)
+//  Pulls GET /worldcup. Lists today's matches compactly (live score +
+//  minute / FT / kickoff), highlights Spain, or falls back to spainNext.
 // ═══════════════════════════════════════════════════════════════
-const POMO_WORK  = 25 * 60;
-const ST_CIRC    = 314.16;   // 2π × r=50
-let timerTotal   = POMO_WORK;
-let timerLeft    = POMO_WORK;
-let timerRunning = false;
-let timerTick_   = null;
-let timerSessions = 0;
-let timerClickT  = null;
-
-function timerSubjectColor() {
-  const sess = document.getElementById('st-session')?.textContent || '';
-  if (!HUB || !sess || sess === 'CLICK START') return '#00d4ff';
-  const subj = (HUB?.settings?.subjects || []).find(s =>
-    (s.name || '').toUpperCase() === sess.toUpperCase());
-  return subj?.color || '#00d4ff';
+const WC_WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function wcWeekday(ds) {
+  if (!ds) return '';
+  const d = new Date(ds + 'T00:00:00');
+  return isNaN(d) ? '' : (WC_WDAYS[d.getDay()] || '');
+}
+function wcEsc(s) {
+  return String(s ?? '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 }
 
-function updateTimerDisplay() {
-  const m = Math.floor(timerLeft / 60), s = timerLeft % 60;
-  const tEl = document.getElementById('st-time');
-  const lEl = document.getElementById('st-label');
-  const ring = document.getElementById('st-ring');
-  if (tEl) tEl.textContent = `${pad(m)}:${pad(s)}`;
-  if (lEl) lEl.textContent = timerRunning ? 'FOCUS' : (timerLeft === timerTotal ? 'POMODORO' : 'PAUSED');
-  if (ring) {
-    const progress = timerLeft / timerTotal;
-    ring.style.strokeDashoffset = (ST_CIRC * (1 - progress)).toFixed(2);
-    const col = timerRunning ? timerSubjectColor() : 'rgba(0,212,255,.22)';
-    ring.style.stroke = col;
-    ring.style.filter = timerRunning
-      ? `drop-shadow(0 0 5px ${col})`
-      : 'none';
-    ring.classList.toggle('active', timerRunning);
-  }
-}
-
-function startTimer() {
-  if (timerLeft === 0) { timerLeft = timerTotal; }
-  timerRunning = true;
-  clearInterval(timerTick_);
-  timerTick_ = setInterval(() => {
-    timerLeft = Math.max(0, timerLeft - 1);
-    updateTimerDisplay();
-    if (timerLeft === 0) {
-      timerRunning = false;
-      clearInterval(timerTick_);
-      timerSessions++;
-      logStudySession();
-      showToast(`POMODORO DONE · SESSION ${timerSessions}`);
-    }
-  }, 1000);
-  updateTimerDisplay();
-}
-
-function pauseTimer() {
-  timerRunning = false;
-  clearInterval(timerTick_);
-  updateTimerDisplay();
-}
-
-function resetTimer() {
-  pauseTimer();
-  timerLeft = timerTotal;
-  updateTimerDisplay();
-}
-
-function toggleTimer() {
-  if (timerRunning) pauseTimer();
-  else startTimer();
-}
-
-function timerClick(e) {
-  if (timerClickT) {
-    clearTimeout(timerClickT);
-    timerClickT = null;
-    resetTimer();
-  } else {
-    timerClickT = setTimeout(() => { timerClickT = null; toggleTimer(); }, 260);
-  }
-}
-
-function logStudySession() {
+async function refreshWcToday() {
+  const list = document.getElementById('wc-today-list');
+  if (!list) return;
   try {
-    const st    = JSON.parse(localStorage.getItem('sh_streak') || '{"count":0}');
-    const today = todayStr();
-    if (st.lastDate !== today) {
-      st.count = (st.lastDate === dateOffset(-1)) ? (st.count || 0) + 1 : 1;
-      st.lastDate = today;
-      localStorage.setItem('sh_streak', JSON.stringify(st));
+    const r = await fetch(`${SERVER}/worldcup`, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error('bad');
+    const d = await r.json();
+    const live  = ['IN_PLAY', 'PAUSED'];
+    const games = Array.isArray(d.today) ? d.today : [];
+
+    if (games.length) {
+      list.innerHTML = games.map(m => {
+        const isLive = live.includes(m.status);
+        const isFT   = m.status === 'FINISHED';
+        const sh = m.scoreHome ?? 0, sa = m.scoreAway ?? 0;
+        let meta;
+        if (isLive)      meta = `${sh}–${sa}${m.minute != null ? ` · ${m.minute}'` : ' · LIVE'}`;
+        else if (isFT)   meta = `FT ${sh}–${sa}`;
+        else             meta = m.kickoff || '';
+        const cls = ['wc-t-row', m.isSpain ? 'wc-t-spain' : '', isLive ? 'wc-t-live' : '']
+          .filter(Boolean).join(' ');
+        return `<div class="${cls}"><span class="wc-t-teams">${wcEsc(m.home)} vs ${wcEsc(m.away)}</span>` +
+               `<span class="wc-t-meta">${wcEsc(meta)}</span></div>`;
+      }).join('');
+    } else if (d.spainNext) {
+      const opp = wcEsc(d.spainNext.opponent || 'TBD');
+      const wd  = wcWeekday(d.spainNext.date);
+      list.innerHTML = `<div class="wc-t-next">Next: <b>Spain vs ${opp}</b>` +
+                       `<br>${wd ? wd + ' ' : ''}${wcEsc(d.spainNext.kickoff || '')}</div>`;
+    } else {
+      list.innerHTML = `<span class="wc-t-empty">No games today</span>`;
     }
-  } catch {}
+  } catch {
+    list.innerHTML = `<span class="wc-t-empty">OFFLINE</span>`;
+  }
 }
 
-updateTimerDisplay();
+refreshWcToday();
+setInterval(refreshWcToday, 60 * 1000);   // refresh every 60s (server caches 5 min)
 
 // ═══════════════════════════════════════════════════════════════
 //  FEATURE 1 — SPOTIFY
@@ -3104,6 +3895,268 @@ function _addChatMsg(type, text) {
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
+/*
+ * ── CHANGELOG (speech-recognition tuning, 2026-06-13) ──────────────────────
+ * Backup: jarvis.backup5.html
+ *
+ * 1. LANGUAGE DEFAULT  — VSET.lang changed from 'en-GB' default was 'en-US';
+ *    now defaults to 'en-GB' (better for German-accented English recognition).
+ *    Both wakeRec and spawnRec fallback also changed from 'en-US' → 'en-GB'.
+ *    Toggle in ⚙ VOICE SET still lets you switch to en-US if needed.
+ *
+ * 2. MAX ALTERNATIVES  — already 3 + best-confidence from previous session.
+ *
+ * 3. AUDIO CONSTRAINTS — getUserMedia now requests:
+ *    echoCancellation:true, noiseSuppression:true, autoGainControl:true.
+ *    Cleans up the laptop mic signal before it reaches the recognizer.
+ *
+ * 4. SILENCE WINDOW    — CMD_SILENCE_MS constant removed. Replaced by
+ *    VSET.silence (default 2000ms, range 800–4000ms). Exposed as a slider
+ *    in ⚙ VOICE SET so you can fine-tune mid-session. Persisted in localStorage.
+ *
+ * 5. CONFIDENCE BADGE  — #conf-badge span added after the text input.
+ *    Shows recognition confidence % while listening: green ≥80%, yellow ≥55%,
+ *    red <55%. Clears when listening stops. lastConf tracked per session.
+ *
+ * REVERT:  cp jarvis.backup5.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (web search, 2026-06-13) ─────────────────────────────────────
+ * Backup: jarvis.backup-search.html
+ *
+ * WEB_QUESTION regex — detects factual questions (what/who/where/when/why/
+ *   how/define/explain/tell me about/capital of/history of/meaning of).
+ *
+ * tryLocalIntent(msg) — client-side handler (no server call) for:
+ *   • homework / due / assignments → reads HUB.homework
+ *   • exams / tests / upcoming → reads HUB.exams
+ *   • schedule / timetable / lessons → calls getTodayLessons()
+ *   Returns plain-English string or null if no pattern matches.
+ *
+ * submitQuery() — new 3-tier routing:
+ *   1. tryLocalIntent() → if matched, show + speak immediately (no network)
+ *   2. WEB_QUESTION + /search → if server returns answer, show + speak
+ *      (speaks first 1-2 sentences; longer text shown in full in panel)
+ *   3. /command (Claude) → fallback for everything else, files, commands
+ *
+ * "SEARCHING WEB" loading state shown during /search; restores "PROCESSING"
+ * if web search returns nothing before falling through to Claude.
+ *
+ * REVERT: cp jarvis.backup-search.html jarvis.html
+ *         cp jarvis-server.backup-search.js jarvis-server.js
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (weather + routing + minimal redesign, 2026-06-13) ───────────
+ * Backups: jarvis.backup-redesign.html · jarvis-server.backup-redesign.js
+ *
+ * 1. WEATHER BY CITY — Open-Meteo geocode + forecast (keyless, CORS-direct).
+ *    New local intent: "weather" or "weather in <place>" → speaks e.g.
+ *    "It's 24°, feels like 25°, clear skies in Madrid." Defaults to Zürich.
+ *    Helpers: WMO_PHRASE map + weatherAnswer(place). Runs as the FIRST local
+ *    intent (before any web-search / page-reader path).
+ *
+ * 2. ROUTING FIX — submitQuery order is now:
+ *    (a) local intents (weather, homework, exams, schedule);
+ *    (b) if it looks like a QUESTION (WEB_QUESTION or ends with "?") and is
+ *        NOT an explicit task-add → /search ONLY. If nothing is found it now
+ *        says "I couldn't find anything on that." and STOPS — it no longer
+ *        falls through to Claude's Chrome page-reader, so the "Allow
+ *        JavaScript from Apple Events" permission message never shows for Q&A;
+ *    (c) everything else (commands, explicit task-add, general requests) → Claude.
+ *    EXPLICIT_ADD regex gates task creation to add / remind me / create task /
+ *    new homework|task|exam / set reminder / log. Server bridge keywords were
+ *    tightened to match (stops task-dumping on words like "exam"/"homework").
+ *
+ * 3. MINIMAL REDESIGN — side widget panels, news ticker and timetable strip
+ *    are HIDDEN by default (minimal mode). Centered view keeps only: clock +
+ *    date, greeting, the reactor/voice orb, the command bar + mic, and the
+ *    response panel. No widget code was deleted — a new "▦ PANELS" button
+ *    (bottom-right) toggles them back on; state saved in localStorage
+ *    ('jarvis_panels', default off) via togglePanels()/syncPanelsButton().
+ *    CSS: body:not(.show-panels) hides .panels/#ticker/#tt-strip and centers #middle.
+ *
+ * REVERT: cp jarvis.backup-redesign.html jarvis.html
+ *         cp jarvis-server.backup-redesign.js jarvis-server.js
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (right-side answer panel, 2026-06-13) ────────────────────────
+ * Backup: jarvis.backup-rightpanel.html
+ *
+ * Moved the answer/response OUT of the bottom-center bar. #response-panel is
+ * now docked to the RIGHT (right:34px, width clamp 330–480px ≈ right third),
+ * vertically centered (top:50% / translateY(-50%)), and slides/fades in from
+ * the right when there's an answer, sliding away on dismiss. The centre stays
+ * focused on the orb + command input; the panel sits beside it, not under it.
+ *
+ * Card: frosted glass (blur 18px), thin cyan border + 2px cyan left edge, soft
+ * glow. Header shows the QUESTION asked (Orbitron, 2-line clamp) + a round ×
+ * close button. Body is readable sans-serif 17px / line-height 1.7, auto-wrap,
+ * scrolls when long. New #response-src footer shows "— Wikipedia" in small dim
+ * text (hidden when empty). JS: showResult(text, source) sets body + source
+ * separately; loading clears the source line.
+ *
+ * Responsive: @media (max-width:900px) re-docks the panel BELOW the orb,
+ * horizontally centered (bottom:128px), so it never crowds a narrow window.
+ *
+ * REVERT: cp jarvis.backup-rightpanel.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (two-way wake: double-clap + voice phrase, 2026-06-13) ───────
+ * Backup: jarvis.backup-wake.html
+ *
+ * SHARED ACTIVATION — activateJarvis(source): one entry point used by BOTH
+ *   wake methods. Guards on V.listening/V.speaking + a 1.5s cooldown, then:
+ *   wake chime → wakingPulse() ("waking up" glow + scale on the orb) →
+ *   optional spoken reply (speakAck → "Yes?"/"I'm listening", picks a voice
+ *   and starts command listening on end) → startListening(). When the spoken
+ *   reply is off it listens immediately (no lost first words).
+ *
+ * 1. VOICE WAKE — the existing wake recognizer (isWake fuzzy match: "jarvis",
+ *    "hey jarvis", "jarvis wake up", "wake up jarvis" + mishears) now routes
+ *    through activateJarvis('voice') instead of its own inline flow.
+ *
+ * 2. DOUBLE-CLAP — always-on transient detector (startClapDetector) with its
+ *    OWN persistent AudioContext/analyser on permStream (fftSize 1024,
+ *    time-domain peak). A clap = a sharp rising-edge transient above a
+ *    sensitivity threshold AFTER ~50ms of relative quiet, with a 120ms
+ *    refractory so one clap isn't counted twice. Two claps 150–600ms apart →
+ *    activateJarvis('clap'); first clap gives a subtle orb pulse; resets if the
+ *    2nd doesn't arrive; 1.5s cooldown after waking. Detector is SUPPRESSED
+ *    while Jarvis speaks/chimes/listens or during cooldown (clapSuppressUntil /
+ *    wakeCooldownUntil) so it never claps itself awake.
+ *
+ * SETTINGS (⚙ VOICE SET → WAKE) — persisted in localStorage:
+ *   • VOICE WAKE   → maps to existing V.wake (jarvis_wake), default ON
+ *   • DOUBLE-CLAP  → WAKESET.clap (jarvis_wakeset), default ON
+ *   • REPLY WHEN WOKEN → WAKESET.ack, default ON
+ *   • CLAP SENSITIVITY slider (1 hard … 10 easy) → WAKESET.clapSens (default 5)
+ *
+ * Degrades gracefully with no mic (startClapDetector bails if no permStream;
+ * SpeechRecognition path unaffected). No API, no new libraries.
+ *
+ * REVERT: cp jarvis.backup-wake.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (arc-reactor center redesign, 2026-06-13) ────────────────────
+ * Backup: jarvis.backup-rings.html  ·  visual-only, no JS/IDs removed.
+ *
+ * 1. ARC-REACTOR RINGS — #reactor-ring rebuilt + raised above the canvas
+ *    (z-index 4). Four concentric rings, varied speeds/directions:
+ *      • ::before — slow solid outer ring (46s), bright leading arc + outer glow
+ *      • ::after  — dashed segment ring (30s, reverse)
+ *      • .ar-ticks — ticked HUD ring: fine radial notches via repeating-conic-
+ *        gradient masked into a thin band near the rim (120s)
+ *      • .ar-fast — thin fast inner ring (11s, reverse), bright leading arc
+ *    Ring colour follows a new --ring-rgb custom property.
+ *
+ * 2. CORE — new .arc-core: soft radial cyan glow at dead centre, gentle
+ *    pulse (arcCorePulse), z-index 3 so it sits behind #center-label; the
+ *    label's dark backing keeps "JARVIS / ONLINE" crisp on top.
+ *
+ * 3. NEURAL WEB simplified — NODE_COUNT 80→50 and a global WEB_ALPHA=0.6 dim
+ *    on the whole canvas draw, so the web reads as subtle inner texture. Still
+ *    cyan + animated. (Also removed a per-frame console.log.)
+ *
+ * 4. STATE TINT — #circle-wrap.{listening|processing|speaking} set --ring-rgb
+ *    (red / blue / green), so rings + core tint with state alongside the
+ *    existing canvas tinting.
+ *
+ * 5. prefers-reduced-motion → rings/core/glow animations stop; canvas drift +
+ *    pulse rate are throttled (MAX_SPEED + spawn scaled down).
+ *
+ * REVERT: cp jarvis.backup-rings.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (dark-navy theme + clock relocation, 2026-06-13) ─────────────
+ * Backup: jarvis.backup-theme.html  ·  visual-only, no JS/IDs removed.
+ *
+ * 1. CLOCK — #clock moved OUT of the top-center hero spot to the top-LEFT
+ *    corner (#top now position:fixed; top:46px; left:70px, under #sys-label).
+ *    Shrunk from clamp(44–74px) to 19px, dropped the big pulsing clockGlow
+ *    (keyframe removed). #date-line shrunk to 8px and sits under it. Removed
+ *    the max-height:700px #clock font override so it stays small everywhere.
+ *
+ * 2. JARVIS WORDMARK — top-center #title-bar ("J · A · R · V · I · S") is now
+ *    the focal label: brighter (.28→.62 alpha), larger (9→12px), wider track
+ *    + a soft glow. Center #center-label ("JARVIS / ONLINE") still crisp.
+ *
+ * 3. COLOR SCHEME — shifted centrally via the :root variables:
+ *      --ac      0,212,255  → 94,200,255   (icy electric-blue accent triplet)
+ *      --accent  #00d4ff    → #5ec8ff      (lighter icy blue)
+ *      --accent-bright #00eaff → #9bdcff   (bright ice highlight)
+ *      --bg-0    #010812    → #02070f      (deeper navy base)
+ *      --glass   rgba(0,12,32,.58) → rgba(10,20,44,.58)  (navy panel fill)
+ *    html/body background is now a deep-navy radial gradient (#0b1a3a top →
+ *    #061026 → --bg-0). Ambient body::before retuned to navy/blue only
+ *    (dropped the purple + green glows) for a tasteful, non-neon look.
+ *    --danger/--warn/--success kept for state feedback. Everything that uses
+ *    var(--ac)/var(--accent) (rings, core, text, panels, glows) follows along.
+ *
+ * 4. prefers-reduced-motion now also stops the ambient drift/scan/pulse
+ *    (body::before, #fx-grid, #fx-scan) on top of the rings/core/glow.
+ *
+ * REVERT: cp jarvis.backup-theme.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (clock cluster + WC-today widget, 2026-06-13) ────────────────
+ * Backup: jarvis.backup-layout.html
+ *
+ * 1. JARVIS BY THE CLOCK — #top is now a top-left flex cluster:
+ *    "JARVIS" (#jarvis-mark) | small clock (#clock) over date (#date-line),
+ *    split by a thin divider so they read as one unit. The separate top-center
+ *    wordmark (#title-bar) is retired via display:none (element kept in DOM so
+ *    no IDs/JS break). #center-label ("JARVIS / ONLINE") in the orb unchanged.
+ *
+ * 2. POMODORO TIMER REMOVED — #study-timer HTML, its CSS (#study-timer/.st-*),
+ *    the max-height media rule, and the entire FEATURE-3 timer JS (timerClick/
+ *    toggleTimer/startTimer/…/logStudySession + updateTimerDisplay call) are
+ *    gone. No empty box; nothing else referenced those functions.
+ *
+ * 3. TODAY'S WORLD CUP GAMES — new #wc-today widget in the timer's old top-
+ *    right spot. refreshWcToday() pulls GET /worldcup every 60s and lists
+ *    today's matches as "HOME vs AWAY · kickoff"; live → "score · minute'"
+ *    (red), finished → "FT score", Spain rows highlighted gold. No games →
+ *    "Next: Spain vs <opp> · <Wd> <kickoff>" from spainNext, else "No games
+ *    today". Whole card is clickable → opens /worldcup-schedule in a new tab.
+ *    Dark-blue glass styling matching the theme. (The hidden side-panel
+ *    #wc-block + its refreshWorldCup/ticker are untouched.)
+ *
+ * REVERT: cp jarvis.backup-layout.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ── CHANGELOG (clap-to-wake false-trigger fix, 2026-06-13) ─────────────────
+ * Backup: jarvis.backup-clapfix.html
+ *
+ * The double-clap detector was firing "WAKE:clap" on its own (AGC-pumped mic
+ * hiss crossing a low threshold on the SHARED permStream), which kept
+ * restarting command listening so nothing was ever captured. Fixes:
+ *
+ * 1. DEFAULT OFF — WAKESET.clap now defaults false. A one-time migration
+ *    (localStorage 'jarvis_wake_clapfix') force-disables it once for anyone who
+ *    had the broken version on; they can re-enable it deliberately.
+ *
+ * 2. NO SELF-TRIGGER — detector now runs on its OWN getUserMedia stream
+ *    (autoGainControl:false so silence isn't amplified, echoCancellation:true to
+ *    cancel Jarvis's own chime/voice), never the permStream used during command
+ *    listening. clapLoop still hard-ignores audio while V.listening/V.speaking,
+ *    during chimes (clapSuppressUntil), and for ~1.5s after any wake
+ *    (wakeCooldownUntil), resetting clap state each suppressed frame.
+ *
+ * 3. STRICTER TRANSIENT — clapThreshold raised to 0.62→0.34 (was 0.34→0.10);
+ *    a clap must clear the absolute floor AND exceed 3× the rolling ambient
+ *    baseline (+0.08) AND follow ≥4 quiet frames (~65ms), with a 140ms
+ *    refractory. Two such claps 150–600ms apart are still required to wake.
+ *
+ * 4. CLEAN STOP — stopClapDetector cancels the RAF loop, closes the AudioContext
+ *    AND stops the dedicated stream's tracks; clapLoop ends itself when the
+ *    analyser is gone. Toggling clap off fully releases the mic.
+ *
+ * Normal flow once clap is off is unchanged: "Jarvis" → chime → (ack "Yes?") →
+ * startListening → command captured into #jarvis-inp → submitQuery.
+ *
+ * REVERT: cp jarvis.backup-clapfix.html jarvis.html
+ * ───────────────────────────────────────────────────────────────────────────
+ */
 </script>
 </body>
 </html>

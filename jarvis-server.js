@@ -556,7 +556,9 @@ const server = http.createServer((req, res) => {
       }
 
       // ── LOCAL: StudyHub bridge — extract and store structured item ────────
-      const bridgeKeywords = /\badd\b|\bexam\b|\btest\b|\bhomework\b|\btask\b|\bdue\b|\bremind\b/i;
+      // Only EXPLICIT creation intent triggers a task add — loose words like
+      // "exam"/"homework"/"due" on their own must NOT dump a task.
+      const bridgeKeywords = /\b(?:add|remind\s+me|create\s+(?:a\s+)?task|new\s+(?:homework|task|exam|assignment)|set\s+(?:a\s+)?reminder|log\s+(?:a|an))\b/i;
       if (bridgeKeywords.test(command)) {
         const today = new Date().toISOString().slice(0, 10);
         const extractPrompt =
@@ -681,6 +683,60 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /search?q=... — keyless web search (DuckDuckGo IA → Wikipedia fallback)
+  if (req.method === 'GET' && req.url.startsWith('/search')) {
+    const qs = new URL(req.url, 'http://localhost').searchParams;
+    const q  = (qs.get('q') || '').trim().slice(0, 300);
+    if (!q) { json(res, 400, { error: 'Missing q parameter' }); return; }
+    console.log(`  🔍  /search: ${q.slice(0, 80)}`);
+
+    (async () => {
+      async function tryDDG(query) {
+        const url = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(query) +
+                    '&format=json&no_html=1&skip_disambig=1';
+        const r   = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        if (!r.ok) return null;
+        const d   = await r.json();
+        if (d.AbstractText && d.AbstractText.length > 10)
+          return { answer: d.AbstractText, source: d.AbstractSource || 'DuckDuckGo' };
+        const topic = (d.RelatedTopics || []).find(t => t.Text && t.Text.length > 10);
+        if (topic) return { answer: topic.Text, source: 'DuckDuckGo' };
+        return null;
+      }
+
+      async function tryWiki(query) {
+        // Strip question-word prefixes so "who is Messi" → "Messi",
+        // "what is a redox reaction" → "redox reaction"
+        const stripped = query
+          .replace(/^(?:what(?:'s|\s+is|\s+are|\s+was)?\s+|who(?:'s|\s+is|\s+was)?\s+|where\s+is\s+|capital\s+of\s+|define\s+|explain\s+|tell\s+me\s+about\s+)/i, '')
+          .replace(/^(?:a|an|the)\s+/i, '')
+          .trim();
+        const title = (stripped || query).replace(/\s+/g, '_');
+        const url   = 'https://en.wikipedia.org/api/rest_v1/page/summary/' +
+                      encodeURIComponent(title);
+        const r     = await fetch(url, {
+          headers: { 'Accept': 'application/json', 'User-Agent': 'JarvisDashboard/1.0' },
+          signal:  AbortSignal.timeout(6000),
+        });
+        if (!r.ok) return null;
+        const d = await r.json();
+        if (d.extract && d.extract.length > 10)
+          return { answer: d.extract, source: 'Wikipedia' };
+        return null;
+      }
+
+      try {
+        const result = await tryDDG(q).catch(() => null) ||
+                       await tryWiki(q).catch(() => null);
+        json(res, 200, result || { answer: null, source: null });
+      } catch (e) {
+        console.warn(`  /search error: ${e.message}`);
+        json(res, 200, { answer: null, source: null });
+      }
+    })();
+    return;
+  }
+
   // GET /studyhub-bridge — return pending items then clear
   if (req.method === 'GET' && req.url === '/studyhub-bridge') {
     const data = readBridge();
@@ -717,6 +773,22 @@ server.on('error', e => {
     console.error(`\n  ✗  ${e.message}\n`);
   process.exit(1);
 });
+
+// ── CHANGELOG (web-search route, 2026-06-13) ────────────────────────────────
+// Added GET /search?q=... — tries DuckDuckGo Instant Answer API first
+// (AbstractText or first RelatedTopics.Text), then Wikipedia REST summary as
+// fallback. Uses built-in fetch + AbortSignal.timeout(6s each). No API key,
+// no new npm packages. Returns { answer, source } or { answer:null }.
+// REVERT: cp jarvis-server.backup-search.js jarvis-server.js
+// ────────────────────────────────────────────────────────────────────────────
+//
+// ── CHANGELOG (routing fix, 2026-06-13) ─────────────────────────────────────
+// Tightened the StudyHub bridge trigger: previously ANY message containing
+// "add/exam/test/homework/task/due/remind" created a task (task-dumping on
+// normal questions). Now only EXPLICIT creation intent triggers it:
+// add / remind me / create task / new homework|task|exam / set reminder / log.
+// REVERT: cp jarvis-server.backup-redesign.js jarvis-server.js
+// ────────────────────────────────────────────────────────────────────────────
 
 server.listen(PORT, HOST, () => {
   console.log('');
